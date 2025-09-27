@@ -57,12 +57,12 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
 
   return (
     <section
-      className={`fixed w-full h-full flex items-center justify-center z-[999] px-6 xl:px-15 mt-6 xl:mt-15 pb-15 xl:pb-30 bg-white transition-opacity duration-500 ${
+      className={`fixed w-full h-full -m-4 xl:-m-0 p-4 xl:p-15  flex items-center justify-center z-[999] bg-white transition-opacity duration-500 ${
         isFadingOut ? "opacity-0" : "opacity-100"
       }`}
       onTransitionEnd={handleTransitionEnd}
     >
-      <div className="flex flex-col justify-center items-center gap-7 w-full h-full border-2 border-[#646464]">
+      <div className="flex flex-col justify-center items-center gap-7 2xl:gap-10 w-full h-full border-2 border-[#646464]">
         <span className="text-7xl xl:text-9xl text-[#999FB6] font-bold font-['PT_Sans']">
           {percentage}%
         </span>
