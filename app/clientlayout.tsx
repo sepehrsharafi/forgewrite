@@ -37,9 +37,10 @@ export default function ClientLayout({
       <Scaler />
 
       <div
-        className="flex flex-col xl:flex-row-reverse items-center justify-center"
+        className={`flex flex-col xl:flex-row-reverse items-center justify-center transition-opacity duration-500 ${
+          appState === "ready" ? "opacity-100" : "opacity-0"
+        }`}
         id="scaler-wrapper"
-        style={{ visibility: appState === "ready" ? "visible" : "hidden" }}
       >
         <NavBar />
         <main className="flex flex-col-reverse xl:flex-row p-4 pt-0 xl:p-0 w-screen xl:w-fit xl:h-full h-dvh">

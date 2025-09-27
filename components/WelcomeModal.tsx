@@ -9,8 +9,8 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
     const duration = 2000;
     let startTime: number | null = null;
 
-    const easeInOutCubic = (t: number) => {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const easeInOutQuint = (t: number) => {
+      return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
     };
 
     const animate = (currentTime: number) => {
@@ -20,7 +20,7 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
 
       const elapsedTime = currentTime - startTime;
       const progress = Math.min(elapsedTime / duration, 1);
-      const easedProgress = easeInOutCubic(progress);
+      const easedProgress = easeInOutQuint(progress);
 
       setPercentage(Math.round(easedProgress * 100));
 
