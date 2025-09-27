@@ -6,11 +6,14 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
   const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
-    const duration = 2000;
+    const duration = 2500;
     let startTime: number | null = null;
 
-    const easeInOutQuint = (t: number) => {
-      return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
+    const easeInOutExpo = (t: number) => {
+      if (t === 0) return 0;
+      if (t === 1) return 1;
+      if (t < 0.5) return Math.pow(2, 20 * t - 10) / 2;
+      return (2 - Math.pow(2, -20 * t + 10)) / 2;
     };
 
     const animate = (currentTime: number) => {
@@ -20,7 +23,7 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
 
       const elapsedTime = currentTime - startTime;
       const progress = Math.min(elapsedTime / duration, 1);
-      const easedProgress = easeInOutQuint(progress);
+      const easedProgress = easeInOutExpo(progress);
 
       setPercentage(Math.round(easedProgress * 100));
 
