@@ -24,11 +24,7 @@ export default function MyLottieComponent({
 
   function Skeleton() {
     return (
-      <div
-        className={`h-full rounded-md bg-gray-200 dark:bg-gray-800`}
-        aria-busy
-        aria-label="Loading animation"
-      />
+      <div className={`h-full`} aria-busy aria-label="Loading animation" />
     );
   }
 
