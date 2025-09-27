@@ -265,8 +265,8 @@ export default function MotionSlider({
     <div
       ref={frameRef}
       key={containerKey} // Add key to force re-render of the component tree
-      className={`-z-10 duration-100 transition-opacity ${
-        !beDisplayed && "h-0 hidden overflow-clip"
+      className={`-z-10 transition-all duration-300 ${
+        !beDisplayed && "h-0 opacity-0"
       } mx-auto relative w-full xl:h-screen overflow-clip select-none`}
       onWheel={onWheel}
       style={{

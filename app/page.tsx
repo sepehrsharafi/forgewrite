@@ -103,9 +103,9 @@ export default function Home() {
     <section className="flex flex-col xl:flex-row-reverse overflow-clip h-full">
       <div
         ref={sidePanelRef}
-        className="w-full xl:w-[355px] xl:min-w-[355px] xl:flex flex-col relative hidden h-full overflow-hidden border-t-2 border-b-2 border-[#646464]"
+        className="transform-gpu transition-all duration-300  w-full xl:w-[355px] xl:min-w-[355px] xl:flex flex-col relative hidden h-full overflow-hidden border-t-2 border-b-2 border-[#646464]"
       >
-        <Motion>
+        <Motion className="transform-gpu transition-all duration-300">
           <div
             className={`transform-gpu transition-all duration-300 absolute w-full ${
               showMotionSlider
