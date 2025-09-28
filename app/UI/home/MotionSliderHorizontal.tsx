@@ -19,10 +19,6 @@ export default function MotionSliderHorizontal({
   const REPEATS = 5; // Number of times the visible set is repeated for smooth wrapping
   const totalSlots = VISIBLE * REPEATS; // Total number of rendered card slots
   const buffer = Math.floor((totalSlots - VISIBLE) / 2); // Number of slots above/below the visible band
-  const extendedCards = useMemo(
-    () => Array.from({ length: totalSlots }, (_, i) => labels[i % n]), // Array of cards repeated for wrapping
-    [totalSlots, n]
-  );
 
   // Controls for layout and animation
   const amplitude = 30; // How far cards bulge toward the center (px)
@@ -146,10 +142,17 @@ export default function MotionSliderHorizontal({
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = null;
       // apply a single jump; GSAP animates positions to new slots
-      setOffset((p) => p + deltaItems);
+      setOffset((prevOffset) => {
+        const newOffset = prevOffset + deltaItems;
+        // To prevent the offset from growing indefinitely and causing sync issues,
+        // we'll keep it within a large but bounded range.
+        // The range is a multiple of n * totalSlots to ensure all calculations align.
+        const cycle = n * totalSlots * 2;
+        return ((newOffset % cycle) + cycle) % cycle;
+      });
     }
     prevActiveRef.current = nextNorm;
-  }, [activeIndex, n]);
+  }, [activeIndex, n, totalSlots]);
 
   useEffect(
     () => () => {
@@ -207,7 +210,7 @@ export default function MotionSliderHorizontal({
   useLayoutEffect(() => {
     const o = 0; // start baseline; subsequent steps animate from here
     const mid = buffer + Math.floor(VISIBLE / 2);
-    extendedCards.forEach((_, cardIdx) => {
+    Array.from({ length: totalSlots }).forEach((_, cardIdx) => {
       const s = (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
       const slot = slots[s];
       const el = cardRefs.current[cardIdx];
@@ -219,13 +222,13 @@ export default function MotionSliderHorizontal({
         });
       }
     });
-  }, [buffer, VISIBLE, totalSlots, extendedCards, slots]);
+  }, [buffer, VISIBLE, totalSlots, slots]);
 
   // Animate to new positions on each step using GSAP
   useLayoutEffect(() => {
     const o = ((offset % totalSlots) + totalSlots) % totalSlots;
     const mid = buffer + Math.floor(VISIBLE / 2);
-    extendedCards.forEach((_, cardIdx) => {
+    Array.from({ length: totalSlots }).forEach((_, cardIdx) => {
       const s = (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
       const slot = slots[s];
       const el = cardRefs.current[cardIdx];
@@ -244,7 +247,7 @@ export default function MotionSliderHorizontal({
     return () => {
       refsSnapshot.forEach((el) => el && gsap.killTweensOf(el));
     };
-  }, [offset, slots, totalSlots, buffer, extendedCards]);
+  }, [offset, slots, totalSlots, buffer]);
 
   const width = cardWidth;
 
@@ -257,13 +260,16 @@ export default function MotionSliderHorizontal({
       onTouchEnd={onTouchEnd}
       className="relative w-[100px] h-[375px] mx-auto rotate-x-180 rotate-y-180 rotate-90 overflow-visible select-none"
     >
-      {extendedCards.map((c, cardIdx) => {
+      {Array.from({ length: totalSlots }).map((_, cardIdx) => {
         const o = ((offset % totalSlots) + totalSlots) % totalSlots;
         const s =
           (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
         const isActive = s === mid;
         const depth = Math.abs(s - mid);
         const zIndex = 100 - Math.min(depth, 99);
+        const contentIndexRaw = offset + (s - mid);
+        const contentIndex = ((contentIndexRaw % n) + n) % n;
+        const c = labels[contentIndex];
 
         return (
           <div

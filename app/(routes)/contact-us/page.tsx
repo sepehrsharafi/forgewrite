@@ -257,7 +257,7 @@ export default function Page() {
           <FlipButton
             type="submit"
             disabled={isSubmitting || isLocked}
-            className={`xl:flex xl:justify-start w-full 2xl:w-fit ${buttonStateClassName}`}
+            className={`xl:flex xl:justify-start  xl:w-fit w-full 2xl:w-fit ${buttonStateClassName}`}
             aria-disabled={isSubmitting || isLocked}
           >
             <FlipButtonFront
@@ -273,7 +273,7 @@ export default function Page() {
           </FlipButton>
         </form>
       </ContentSection>
-      <div className=" border-b-2 border-t-2 border-[#646464] hidden xl:block ">
+      <div className=" border-b-2 border-t-2 border-[#646464] hidden xl:block">
         <Motion>
           <MyLottieComponent
             motionLocation={

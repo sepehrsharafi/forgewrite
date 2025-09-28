@@ -30,10 +30,6 @@ export default function MotionSlider({
   const REPEATS = 5; // odd number so the visible set sits centered
   const totalSlots = VISIBLE * REPEATS; // total rendered cards/slots
   const buffer = Math.floor((totalSlots - VISIBLE) / 2); // slots above and below the visible band
-  const extendedCards = useMemo(
-    () => Array.from({ length: totalSlots }, (_, i) => labels[i % n]),
-    [totalSlots, n]
-  );
 
   // State to force re-render when container size changes
   const [containerKey, setContainerKey] = useState(0);
@@ -136,22 +132,35 @@ export default function MotionSlider({
   useEffect(() => {
     if (typeof activeIndex !== "number" || !Number.isFinite(activeIndex))
       return;
+
     const nextNorm = ((activeIndex % n) + n) % n;
     const prevNorm = prevActiveRef.current ?? nextNorm;
-    const forward = (nextNorm - prevNorm + n) % n; // [0..n-1]
-    const backward = forward - n; // negative or zero
+
+    // Find the shortest path to the next index
+    const forward = (nextNorm - prevNorm + n) % n;
+    const backward = forward - n;
     const deltaItems = Math.abs(backward) < forward ? backward : forward;
+
     if (deltaItems !== 0) {
       // cancel any in-flight stepper
       pendingStepsRef.current = 0;
       runningRef.current = false;
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = null;
-      // apply a single jump; GSAP animates positions to new slots
-      setOffset((p) => p + deltaItems);
+
+      // Apply a single jump; GSAP animates positions to new slots
+      setOffset((prevOffset) => {
+        const newOffset = prevOffset + deltaItems;
+        // To prevent the offset from growing indefinitely and causing sync issues,
+        // we'll keep it within a large but bounded range.
+        // The range is a multiple of n * totalSlots to ensure all calculations align.
+        const cycle = n * totalSlots * 2;
+        return ((newOffset % cycle) + cycle) % cycle;
+      });
     }
+
     prevActiveRef.current = nextNorm;
-  }, [activeIndex, n]);
+  }, [activeIndex, n, totalSlots]);
 
   useEffect(
     () => () => {
@@ -210,7 +219,7 @@ export default function MotionSlider({
   useLayoutEffect(() => {
     const o = 0; // start baseline; subsequent steps animate from here
     const mid = buffer + Math.floor(VISIBLE / 2);
-    extendedCards.forEach((_, cardIdx) => {
+    Array.from({ length: totalSlots }).forEach((_, cardIdx) => {
       const s = (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
       const slot = slots[s];
       const el = cardRefs.current[cardIdx];
@@ -222,13 +231,13 @@ export default function MotionSlider({
         });
       }
     });
-  }, [buffer, VISIBLE, totalSlots, extendedCards, slots]);
+  }, [buffer, VISIBLE, totalSlots, slots]);
 
   // Animate to new positions on each step using GSAP
   useLayoutEffect(() => {
     const o = ((offset % totalSlots) + totalSlots) % totalSlots;
     const mid = buffer + Math.floor(VISIBLE / 2);
-    extendedCards.forEach((_, cardIdx) => {
+    Array.from({ length: totalSlots }).forEach((_, cardIdx) => {
       const s = (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
       const slot = slots[s];
       const el = cardRefs.current[cardIdx];
@@ -257,7 +266,7 @@ export default function MotionSlider({
     return () => {
       refsSnapshot.forEach((el) => el && gsap.killTweensOf(el));
     };
-  }, [offset, slots, totalSlots, buffer, extendedCards]);
+  }, [offset, slots, totalSlots, buffer]);
 
   const mid = buffer + Math.floor(VISIBLE / 2);
 
@@ -285,12 +294,15 @@ export default function MotionSlider({
         }}
       >
         <div className="relative w-full h-full">
-          {extendedCards.map((c, cardIdx) => {
+          {Array.from({ length: totalSlots }).map((_, cardIdx) => {
             const o = ((offset % totalSlots) + totalSlots) % totalSlots;
             const s =
               (((cardIdx - o + mid) % totalSlots) + totalSlots) % totalSlots;
             const depth = Math.abs(s - mid);
             const zIndex = 100 - Math.min(depth, 99);
+            const contentIndexRaw = offset + (s - mid);
+            const contentIndex = ((contentIndexRaw % n) + n) % n;
+            const c = labels[contentIndex];
 
             return (
               <div
