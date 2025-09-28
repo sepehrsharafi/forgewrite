@@ -14,7 +14,7 @@ export interface ProjectDetailRecord extends ProjectRecord {
   content?: string[];
 }
 
-const SANITY_QUERY = `*[_type == "project"] | order(_updatedAt desc){
+const SANITY_QUERY = `*[_type == "projects"] | order(_updatedAt desc){
   "title": coalesce(title, ""),
   "imageUrl": coalesce(image.asset->url, ""),
   "description": coalesce(description, ""),
@@ -25,6 +25,10 @@ const SANITY_QUERY = `*[_type == "project"] | order(_updatedAt desc){
 const SANITY_BASE_URL = process.env.SANITY_BASE_URL;
 
 export async function getProjects(): Promise<ProjectRecord[]> {
+  if (!SANITY_BASE_URL) {
+    throw new Error("SANITY_BASE_URL is not configured.");
+  }
+
   const searchParams = new URLSearchParams();
   searchParams.set("perspective", "published");
   searchParams.set("query", SANITY_QUERY);
@@ -47,7 +51,7 @@ export async function getProjects(): Promise<ProjectRecord[]> {
   return data.result ?? [];
 }
 
-const SANITY_PROJECT_DETAIL_QUERY = `*[_type == "project" && slug.current == $slug][0]{
+const SANITY_PROJECT_DETAIL_QUERY = `*[_type == "projects" && slug.current == $slug][0]{
   "title": coalesce(title, ""),
   "slug": coalesce(slug.current, ""),
   "imageUrl": coalesce(image.asset->url, ""),
@@ -61,6 +65,10 @@ const SANITY_PROJECT_DETAIL_QUERY = `*[_type == "project" && slug.current == $sl
 export async function getProjectBySlug(
   slug: string
 ): Promise<ProjectDetailRecord | null> {
+  if (!SANITY_BASE_URL) {
+    throw new Error("SANITY_BASE_URL is not configured.");
+  }
+
   const searchParams = new URLSearchParams();
   searchParams.set("perspective", "published");
   searchParams.set("query", SANITY_PROJECT_DETAIL_QUERY);
