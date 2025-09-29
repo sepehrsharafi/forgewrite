@@ -38,7 +38,9 @@ export default function ClientLayout({
 
       <div
         className={`flex flex-col xl:flex-row-reverse items-center justify-center transition-opacity duration-500 ${
-          appState === "ready" ? "opacity-100" : "opacity-0"
+          appState === "ready"
+            ? "opacity-100"
+            : "opacity-0 h-0 w-0 overflow-clip"
         }`}
         id="scaler-wrapper"
       >
