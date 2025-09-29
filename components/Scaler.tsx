@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 
-const DESIGN_WIDTH_MD = 1390;
+const DESIGN_WIDTH_MD = 1439;
 const DESIGN_WIDTH_LG = 1910;
 
 export default function Scaler() {
@@ -27,7 +27,7 @@ export default function Scaler() {
           if (screenWidth > DESIGN_WIDTH_LG) {
             contentHeight = contentWidth * screenAspectRatio * 0.88; // 0.8 factor to leave some margin
           } else {
-            contentHeight = contentWidth * screenAspectRatio * 0.9; // 0.8 factor to leave some margin}
+            contentHeight = contentWidth * screenAspectRatio * 0.87; // 0.8 factor to leave some margin}
           }
 
           // Calculate scale based on available space
