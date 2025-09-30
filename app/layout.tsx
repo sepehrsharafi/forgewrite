@@ -31,7 +31,7 @@ export default function RootLayout({
       className={`relative ${inter.className} ${ptSans.variable}`}
     >
       <body>
-        <main className="flex flex-col-reverse xl:flex-row p-4 pt-0 xl:p-0 w-screen xl:w-fit xl:h-full h-dvh">
+        <main>
           <ClientLayout>{children}</ClientLayout>
         </main>
       </body>

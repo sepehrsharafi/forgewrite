@@ -18,14 +18,14 @@ async function InsightDetail({ slug }: { slug: string }) {
   return (
     <>
       <ContentSection>
-        <div className="border-t-2 border-b-2 -m-6 border-[#646464] block  xl:hidden">
+        <div className="-m-6 block xl:hidden">
           <Motion>
             <Image
               src={insight.imageUrl || "/images/fallback-image.png"}
               width={1600}
               height={900}
               alt={insight.title || "Insight image"}
-              className="w-full h-full object-contain saturate-10"
+              className="w-full h-full object-cover saturate-10"
             />
           </Motion>
         </div>

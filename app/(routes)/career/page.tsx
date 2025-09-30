@@ -4,8 +4,8 @@ import ContentSection from "@/app/UI/layout/ContentSection";
 import Motion from "@/app/UI/layout/MotionContainer";
 import RiveAnimation from "@/app/UI/layout/rivecomponent";
 import MyLottieComponent from "@/lib/LottieMotion";
-import { FlipButton, FlipButtonFront } from "@/components/buttons/flip";
-import { FlipButtonBack } from "@/components/animate-ui/primitives/buttons/flip";
+import { FlipButton, FlipButtonFront } from "@/app/UI/components/buttons/flip";
+import { FlipButtonBack } from "@/app/UI/components/animate-ui/primitives/buttons/flip";
 import Link from "next/link";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 

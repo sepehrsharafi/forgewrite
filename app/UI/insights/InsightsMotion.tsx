@@ -1,5 +1,5 @@
 "use client";
-import TypingAnimation from "@/components/magicui/typing-animation";
+import TypingAnimation from "@/app/UI/components/magicui/typing-animation";
 import React, { useEffect, useState } from "react";
 import "@/app/globals.css";
 

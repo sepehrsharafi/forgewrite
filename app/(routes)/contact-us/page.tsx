@@ -3,8 +3,8 @@ import React from "react";
 import ContentHeader from "@/app/UI/layout/ContentHeader";
 import Motion from "@/app/UI/layout/MotionContainer";
 import ContentSection from "@/app/UI/layout/ContentSection";
-import { FlipButton, FlipButtonFront } from "@/components/buttons/flip";
-import { FlipButtonBack } from "@/components/animate-ui/primitives/buttons/flip";
+import { FlipButton, FlipButtonFront } from "@/app/UI/components/buttons/flip";
+import { FlipButtonBack } from "@/app/UI/components/animate-ui/primitives/buttons/flip";
 import MyLottieComponent from "@/lib/LottieMotion";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

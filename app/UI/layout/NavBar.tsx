@@ -1,11 +1,12 @@
 "use client";
 
-import { LetterSwapForward } from "@/components/LetterSwap";
+import { LetterSwapForward } from "@/app/UI/components/LetterSwap";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,84 +33,85 @@ function NavBar() {
     <>
       <nav
         className={`xl:hidden ${
-          isOpen && "h-svh"
-        } fixed bg-white top-0 left-0 p-4 pb-0 flex flex-col items-center w-full z-[999]`}
+          isOpen ? "h-dvh w-fit p-4" : "w-full p-4 pb-0"
+        } fixed bg-white top-0 right-0 flex flex-col items-center z-[999]`}
       >
-        <div
-          className={`flex flex-col ${
-            isOpen && "divide-y-2"
-          } divide-[#646464] border-2 border-[#646464] w-full`}
-        >
-          <div className="flex flex-row justify-between items-center p-5 w-full">
-            <Link href={"/"} onClick={() => setIsOpen(false)}>
-              <Image
-                src={"/images/logo.png"}
-                width={1200}
-                height={500}
-                alt="Logo"
-                className="w-[213px] h-6"
-              />
-            </Link>
-            <button onClick={() => setIsOpen(!isOpen)}>
-              {!isOpen ? (
-                <svg
+        <div className="flex flex-row justify-between border-2 border-b-2 border-[#646464] items-center w-full p-5">
+          <Link href={"/"} onClick={() => setIsOpen(false)}>
+            <Image
+              src={"/images/logo.png"}
+              width={1200}
+              height={500}
+              alt="Logo"
+              className="w-[213px] h-6"
+            />
+          </Link>
+          <button onClick={() => setIsOpen(!isOpen)}>
+            {!isOpen ? (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <mask
+                  id="mask0_342_2178"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
                   width="24"
                   height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <mask
-                    id="mask0_342_2178"
-                    maskUnits="userSpaceOnUse"
-                    x="0"
-                    y="0"
-                    width="24"
-                    height="24"
-                  >
-                    <rect width="24" height="24" fill="#D9D9D9" />
-                  </mask>
-                  <g mask="url(#mask0_342_2178)">
-                    <path
-                      d="M3 18V16H21V18H3ZM3 13V11H21V13H3ZM3 8V6H21V8H3Z"
-                      fill="#1F1F1F"
-                    />
-                  </g>
-                </svg>
-              ) : (
-                <svg
+                  <rect width="24" height="24" fill="#D9D9D9" />
+                </mask>
+                <g mask="url(#mask0_342_2178)">
+                  <path
+                    d="M3 18V16H21V18H3ZM3 13V11H21V13H3ZM3 8V6H21V8H3Z"
+                    fill="#1F1F1F"
+                  />
+                </g>
+              </svg>
+            ) : (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <mask
+                  id="mask0_342_2198"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
                   width="24"
                   height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <mask
-                    id="mask0_342_2198"
-                    maskUnits="userSpaceOnUse"
-                    x="0"
-                    y="0"
-                    width="24"
-                    height="24"
-                  >
-                    <rect width="24" height="24" fill="#D9D9D9" />
-                  </mask>
-                  <g mask="url(#mask0_342_2198)">
-                    <path
-                      d="M6.4 19L5 17.6L10.6 12L5 6.4L6.4 5L12 10.6L17.6 5L19 6.4L13.4 12L19 17.6L17.6 19L12 13.4L6.4 19Z"
-                      fill="#1F1F1F"
-                    />
-                  </g>
-                </svg>
-              )}
-            </button>
-          </div>
-
-          <div
-            style={{ height: "calc(100vh - 96px)" }}
+                  <rect width="24" height="24" fill="#D9D9D9" />
+                </mask>
+                <g mask="url(#mask0_342_2198)">
+                  <path
+                    d="M6.4 19L5 17.6L10.6 12L5 6.4L6.4 5L12 10.6L17.6 5L19 6.4L13.4 12L19 17.6L17.6 19L12 13.4L6.4 19Z"
+                    fill="#1F1F1F"
+                  />
+                </g>
+              </svg>
+            )}
+          </button>
+        </div>
+        <div className={`flex flex-col h-full w-full`}>
+          <motion.div
             className={`${
               isOpen ? "flex" : "hidden"
-            } bg-white z-50 flex flex-col justify-between h-screen w-full`}
+            } z-50 flex flex-col h-full justify-between w-full border-x-2 border-b-2 border-t-0 border-[#646464]`}
+            initial={{ opacity: 0, x: 0 }}
+            animate={{
+              opacity: isOpen ? 1 : 0,
+              x: isOpen ? 0 : 0,
+            }}
+            exit={{ opacity: 0, x: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <ul className="flex flex-col divide-y-1 divide-[#EBEBEB] text-[#373737] w-full text-base font-medium">
               <NavItem text="Services" link="/services" />
@@ -213,7 +215,7 @@ function NavBar() {
                 FORGEWRITE LLC 2025
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </nav>
       <nav
