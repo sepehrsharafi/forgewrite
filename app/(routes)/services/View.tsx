@@ -4,24 +4,15 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { FlipButton, FlipButtonFront } from "@/app/UI/components/buttons/flip";
 import { FlipButtonBack } from "@/app/UI/components/animate-ui/primitives/buttons/flip";
-import { ServiceCategory } from "@/lib/sanity/types";
-import { useServicesContext } from "./ServicesContext";
+import type {
+  ServiceCategory,
+  ServicesData,
+} from "@/lib/sanity/types";
 
-interface ServicesData {
-  categories: ServiceCategory[];
-  leaderName: string;
-  leaderImageUrl: string;
-}
-
-const motionMap: Record<string, string> = {
-  engineers: "/motion/Mobile-responsive/M-Services-1.json",
-  fieldSupport: "/motion/Mobile-responsive/M-Services-2.json",
-  officeManagers: "/motion/Mobile-responsive/M-Services-3.json",
-};
-const motionMapDesktop: Record<string, string> = {
-  engineers: "/motion/Medium Desktop - responsive/D1- Services-1.json",
-  fieldSupport: "/motion/Medium Desktop - responsive/D1- Services-2.json",
-  officeManagers: "/motion/Medium Desktop - responsive/D1- Services-3.json",
+type ServicesViewProps = {
+  servicesData: ServicesData;
+  activeCategoryId: string;
+  onCategoryChange: (categoryId: string) => void;
 };
 
 function CheckIcon() {
@@ -44,11 +35,9 @@ function CheckIcon() {
 
 export default function ServicesView({
   servicesData,
-}: {
-  servicesData: ServicesData;
-}) {
-  const { activeCategoryId, setActiveCategoryId } = useServicesContext();
-
+  activeCategoryId,
+  onCategoryChange,
+}: ServicesViewProps) {
   const activeCategory = useMemo<ServiceCategory | undefined>(
     () =>
       servicesData.categories.find(
@@ -66,12 +55,12 @@ export default function ServicesView({
         {servicesData.categories.map((category) => (
           <div
             key={category.id}
-            onClick={() => setActiveCategoryId(category.id)}
-            className="text-sm 2xl:text-2xl font-[''PT_Sans''] rounded h-full"
+            onClick={() => onCategoryChange(category.id)}
+            className="text-sm 2xl:text-2xl font-['PT_Sans'] rounded h-full"
           >
             <FlipButton className="rounded-sm">
               <FlipButtonFront
-                className={`text-nowrap p-3 w-full 2xl:text-2xl h-full shadow-none rounded-sm bg-white ${
+                className={`text-nowrap p-3 w-full 2xl:text-2xl h-full shadow-none rounded-sm ${
                   activeCategoryId === category.id
                     ? "bg-[#4D4E69] border-1 border-[#4D4E69] text-white font-[600]"
                     : "bg-white text-black border-1 border-[#EBEBEB]"

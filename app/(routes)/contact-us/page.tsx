@@ -7,7 +7,7 @@ import MyLottieComponent from "@/lib/LottieMotion";
 import ContactForm from "../../UI/contactus/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Forgewrite | Get in Touch for Projects & Inquiries",
+  title: "Get in Touch for Projects & Inquiries | Forgewrite",
   description:
     "Have a question or a project in mind? Contact Forgewrite today. We're here to help with new projects, maintenance, and any inquiries you may have.",
 };
