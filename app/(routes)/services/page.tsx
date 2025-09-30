@@ -7,8 +7,11 @@ import Image from "next/image";
 import MyLottieComponent from "@/lib/LottieMotion";
 import ServicesSkeleton from "@/app/UI/services/ServicesSkeleton";
 import ContentSection from "@/app/UI/layout/ContentSection";
-import { FlipButton, FlipButtonFront } from "@/app/UI/components/buttons/flip";
-import { FlipButtonBack } from "@/app/UI/components/animate-ui/primitives/buttons/flip";
+import {
+  FlipButton,
+  FlipButtonFront,
+  FlipButtonBack,
+} from "@/app/UI/components/buttons/flip";
 
 interface ServiceCategory {
   id: string;
