@@ -8,6 +8,30 @@ import Link from "next/link";
 import { getProjectBySlug } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
 import { Metadata } from "next";
+import { RichPortableText } from "@/app/UI/components/RichPortableText";
+import type { PortableTextBlock } from "@portabletext/types";
+
+function portableTextToPlainText(blocks?: PortableTextBlock[]): string {
+  if (!Array.isArray(blocks)) {
+    return "";
+  }
+
+  return blocks
+    .map((block) => {
+      if (!block || block._type !== "block" || !Array.isArray((block as { children?: unknown }).children)) {
+        return "";
+      }
+
+      const children = (block as { children?: Array<{ text?: string }> }).children ?? [];
+
+      return children
+        .map((child) => (typeof child?.text === "string" ? child.text : ""))
+        .join("");
+    })
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export async function generateMetadata({
   params,
@@ -21,13 +45,17 @@ export async function generateMetadata({
     notFound();
   }
 
+  const plainText = portableTextToPlainText(project.content);
+  const fallbackDescription = project.description?.trim() || "Explore the details of our project work at ForgeWrite.";
+  const descriptionSource = plainText || fallbackDescription;
   const description =
-    (Array.isArray(project.content) && project.content[0]) ||
-    "Explore the details of our project work at ForgeWrite.";
+    descriptionSource.length > 160
+      ? `${descriptionSource.slice(0, 157).trimEnd()}...`
+      : descriptionSource;
 
   return {
     title: `${project.title || "Project"} | ForgeWrite`,
-    description: description,
+    description,
   };
 }
 
@@ -90,16 +118,7 @@ async function ProjectDetail({ slug }: { slug: string }) {
           ) : null}
 
           {contentBlocks.length > 0 && (
-            <div className="flex flex-col gap-4 text-[#4E4E4E]">
-              {contentBlocks.map((paragraph, index) => (
-                <p
-                  key={`project-content-${index}`}
-                  className="whitespace-pre-line 2xl:text-xl"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+            <RichPortableText value={contentBlocks} className="text-[#4E4E4E]" />
           )}
         </section>
       </ContentSection>
