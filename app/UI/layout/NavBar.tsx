@@ -47,7 +47,7 @@ function NavBar() {
                 width={1200}
                 height={500}
                 alt="Logo"
-                className="w-[213px]"
+                className="w-[213px] h-6"
               />
             </Link>
             <button onClick={() => setIsOpen(!isOpen)}>
@@ -230,7 +230,7 @@ function NavBar() {
               width={1000}
               height={500}
               alt="Logo"
-              className="w-[267px]"
+              className="w-[267px] h-[30px]"
             />
           </Link>
           <ul className="flex flex-col divide-y-1 divide-[#EBEBEB] text-[#373737] text-base font-medium">

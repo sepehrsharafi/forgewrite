@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 export default function WelcomeModal({ onClose }: { onClose: () => void }) {
   const [percentage, setPercentage] = useState(0);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    const showTimer = setTimeout(() => setIsVisible(true), 10);
     const duration = 2500;
     let startTime: number | null = null;
 
@@ -35,6 +37,7 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
     const animationFrameId = requestAnimationFrame(animate);
 
     return () => {
+      clearTimeout(showTimer);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -57,8 +60,12 @@ export default function WelcomeModal({ onClose }: { onClose: () => void }) {
 
   return (
     <section
-      className={`fixed w-full h-full -m-4 xl:-m-0 p-4 xl:p-15  flex items-center justify-center z-[999] bg-white transition-opacity duration-500 ${
-        isFadingOut ? "opacity-0" : "opacity-100"
+      className={`fixed w-full h-full -m-4 xl:-m-0 p-4 xl:p-15  flex items-center justify-center z-[999] bg-white transition-opacity ${
+        isFadingOut
+          ? "duration-500 opacity-0"
+          : isVisible
+          ? "duration-300 opacity-100"
+          : "opacity-0"
       }`}
       onTransitionEnd={handleTransitionEnd}
     >
