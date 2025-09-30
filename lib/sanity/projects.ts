@@ -1,6 +1,25 @@
 import "server-only";
 import type { PortableTextBlock } from "@portabletext/types";
 
+export interface PortableImageBlock {
+  _key: string;
+  _type: "image";
+  asset?: {
+    url?: string;
+    metadata?: {
+      dimensions?: {
+        width?: number;
+        height?: number;
+        aspectRatio?: number;
+      };
+    };
+  };
+  alt?: string;
+  caption?: string;
+}
+
+export type ProjectPortableTextBlock = PortableTextBlock | PortableImageBlock;
+
 export interface ProjectRecord {
   title: string;
   slug: string;
@@ -12,7 +31,7 @@ export interface ProjectRecord {
 export interface ProjectDetailRecord extends ProjectRecord {
   establishedAt?: string;
   breadCrumb?: string[];
-  content?: PortableTextBlock[];
+  content?: ProjectPortableTextBlock[];
 }
 
 const SANITY_QUERY = `*[_type == "projects"] | order(_updatedAt desc){
@@ -69,6 +88,21 @@ const SANITY_PROJECT_DETAIL_QUERY = `*[_type == "projects" && slug.current == $s
           ...,
           "slug": reference->slug
         }
+      },
+      _type == "image" => {
+        ...,
+        asset->{
+          url,
+          metadata{
+            dimensions{
+              width,
+              height,
+              aspectRatio
+            }
+          }
+        },
+        "alt": coalesce(alt, asset->altText, ""),
+        "caption": coalesce(caption, "")
       }
     },
     []

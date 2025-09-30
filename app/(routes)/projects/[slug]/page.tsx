@@ -5,20 +5,19 @@ import ContentSection from "@/app/UI/layout/ContentSection";
 import Motion from "@/app/UI/layout/MotionContainer";
 import Image from "next/image";
 import Link from "next/link";
-import { getProjectBySlug } from "@/lib/sanity/projects";
+import { getProjectBySlug, type ProjectPortableTextBlock } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
 import { Metadata } from "next";
 import { RichPortableText } from "@/app/UI/components/RichPortableText";
-import type { PortableTextBlock } from "@portabletext/types";
 
-function portableTextToPlainText(blocks?: PortableTextBlock[]): string {
+function portableTextToPlainText(blocks?: ProjectPortableTextBlock[]): string {
   if (!Array.isArray(blocks)) {
     return "";
   }
 
   return blocks
     .map((block) => {
-      if (!block || block._type !== "block" || !Array.isArray((block as { children?: unknown }).children)) {
+      if (!block || block._type !== "block") {
         return "";
       }
 
