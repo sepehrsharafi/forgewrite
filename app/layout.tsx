@@ -30,6 +30,29 @@ export default function RootLayout({
       lang="en"
       className={`relative ${inter.className} ${ptSans.variable}`}
     >
+      <head>
+        <title>Forgewrite</title>
+        <meta name="description" content="Innovative Fire solutions" />
+
+        <meta property="og:url" content="https://forgewrite.vercel.app" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Forgewrite" />
+        <meta property="og:description" content="Innovative Fire solutions" />
+        <meta
+          property="og:image"
+          content="https://forgewrite.vercel.app/opengraph-image.jpg?31a546c5e54a40da"
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="twitter:domain" content="forgewrite.vercel.app" />
+        <meta property="twitter:url" content="https://forgewrite.vercel.app" />
+        <meta name="twitter:title" content="Forgewrite" />
+        <meta name="twitter:description" content="Innovative Fire solutions" />
+        <meta
+          name="twitter:image"
+          content="https://forgewrite.vercel.app/opengraph-image.jpg?31a546c5e54a40da"
+        />
+      </head>
       <body>
         <main>
           <ClientLayout>{children}</ClientLayout>
