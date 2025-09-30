@@ -144,6 +144,12 @@ const portableTextComponents: PortableTextReactComponents = {
       );
     },
   },
+  hardBreak: () => <br />,
+  unknownMark: ({ children }) => <span>{children}</span>,
+  unknownType: ({ children }) => <span>{children}</span>,
+  unknownBlockStyle: ({ children }) => <p>{children}</p>,
+  unknownList: ({ children }) => <ul>{children}</ul>,
+  unknownListItem: ({ children }) => <li>{children}</li>,
 };
 
 export interface RichPortableTextProps {
