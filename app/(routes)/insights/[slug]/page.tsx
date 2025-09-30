@@ -7,7 +7,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { getInsightBySlug } from "@/lib/sanity/insights";
 import { InsightDetailSkeleton } from "@/app/UI/insights/InsightSkeleton";
+import { Metadata } from "next";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const slug = params.slug;
+  const insight = await getInsightBySlug(slug);
+
+  if (!insight) {
+    notFound();
+  }
+
+  return {
+    title: `${insight.title || "Insight"} | ForgeWrite`,
+    description:
+      insight.description ||
+      "Read more about this topic on ForgeWrite's insights page.",
+  };
+}
 async function InsightDetail({ slug }: { slug: string }) {
   const insight = await getInsightBySlug(slug);
 

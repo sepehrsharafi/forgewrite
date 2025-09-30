@@ -1,3 +1,4 @@
+"use client";
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
 
@@ -8,9 +9,9 @@ import {
   type FlipButtonProps as FlipButtonPrimitiveProps,
   type FlipButtonFrontProps as FlipButtonFrontPrimitiveProps,
   type FlipButtonBackProps as FlipButtonBackPrimitiveProps,
-} from "@/app/UI/components/animate-ui/primitives/buttons/flip";
+} from "../animate-ui/primitives/buttons/flip";
 import { getStrictContext } from "@/lib/get-strict-context";
-import { buttonVariants } from "@/app/UI/components/buttons/button";
+import { buttonVariants } from "../buttons/button";
 import { cn } from "@/lib/utils";
 
 type FlipButtonContextType = VariantProps<typeof buttonVariants>;

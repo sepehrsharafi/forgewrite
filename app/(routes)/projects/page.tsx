@@ -8,6 +8,13 @@ import Link from "next/link";
 import MyLottieComponent from "@/lib/LottieMotion";
 import { getProjects, type ProjectRecord } from "@/lib/sanity/projects";
 import RiveAnimation from "@/app/UI/layout/rivecomponent";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Our Work | ForgeWrite",
+  description:
+    "Explore a selection of our past projects. See how we've helped clients overcome challenges and achieve their goals through innovative engineering and fabrication solutions.",
+};
 
 async function ProjectsList() {
   try {

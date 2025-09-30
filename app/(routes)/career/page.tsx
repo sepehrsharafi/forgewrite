@@ -1,4 +1,3 @@
-"use client";
 import ContentHeader from "@/app/UI/layout/ContentHeader";
 import ContentSection from "@/app/UI/layout/ContentSection";
 import Motion from "@/app/UI/layout/MotionContainer";
@@ -7,34 +6,19 @@ import MyLottieComponent from "@/lib/LottieMotion";
 import { FlipButton, FlipButtonFront } from "@/app/UI/components/buttons/flip";
 import { FlipButtonBack } from "@/app/UI/components/animate-ui/primitives/buttons/flip";
 import Link from "next/link";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { getCareers, type CareerRecord } from "@/lib/sanity/careers";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Join Our Team | Forgewrite ",
+  description:
+    "Explore career opportunities at Forgewrite. We're looking for talented individuals to join our mission-driven team. View our current openings and learn about our culture.",
+};
 
 interface ArticleProps {
   svg: ReactNode;
   text: string;
-}
-
-interface CareerItem {
-  title: string;
-  slug: string;
-  link: string;
-  workLocation: string;
-  employmentType: string;
-}
-
-async function fetchCareersData(): Promise<CareerItem[]> {
-  try {
-    const response = await fetch("/api/careers", { cache: "no-store" });
-    if (!response.ok) return [];
-
-    const json = (await response.json()) as {
-      careers?: CareerItem[] | null;
-    };
-
-    return Array.isArray(json.careers) ? json.careers : [];
-  } catch {
-    return [];
-  }
 }
 
 function CareerListSkeleton() {
@@ -66,81 +50,70 @@ function Article({ svg, text }: ArticleProps) {
   );
 }
 
-function Careers() {
-  const [careers, setCareers] = useState<CareerItem[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      const items = await fetchCareersData();
-      if (!cancelled) {
-        setCareers(items);
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  const jobs = careers ?? [];
+function Careers({ careers: jobs }: { careers: CareerRecord[] }) {
   return (
     <>
-      <Suspense fallback={<CareerListSkeleton />}>
-        <div className="flex flex-col gap-4 -my-6">
-          {jobs.length > 0 ? (
-            jobs.map((job, idx) => (
-              <Link
-                href={job.link}
-                key={`${job.slug || idx}`}
-                className="flex flex-row justify-between items-center bg-[#F3F7F7] hover:bg-[#efefefd2] transition-all duration-200 p-3 2xl:py-4 2xl:px-8"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span className=" text-[#2B4A4F] text-base 2xl:text-xl font-bold ">
-                  {job.title || "Untitled Role"}
+      <div className="flex flex-col gap-4 -my-6">
+        {jobs.length > 0 ? (
+          jobs.map((job, idx) => (
+            <Link
+              href={job.link}
+              key={`${job.slug || idx}`}
+              className="flex flex-row justify-between items-center bg-[#F3F7F7] hover:bg-[#efefefd2] transition-all duration-200 p-3 2xl:py-4 2xl:px-8"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className=" text-[#2B4A4F] text-base 2xl:text-xl font-bold ">
+                {job.title || "Untitled Role"}
+              </span>
+              <div className="flex flex-row items-center gap-2 2xl:gap-4 text-[#4E4E4E]">
+                <span className="text-base  2xl:text-lg font-normal">
+                  {job.workLocation || "Remote"}
                 </span>
-                <div className="flex flex-row items-center gap-2 2xl:gap-4 text-[#4E4E4E]">
-                  <span className="text-base  2xl:text-lg font-normal">
-                    {job.workLocation || "Remote"}
-                  </span>
-                  <svg
-                    width="8"
-                    height="9"
-                    viewBox="0 0 8 9"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle cx="4" cy="4.5" r="4" fill="#D9D9D9" />
-                  </svg>
-                  <span className="text-sm 2xl:text-lg font-normal">
-                    {job.employmentType?.replaceAll("_", " ") || "Full time"}
-                  </span>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <p className="text-sm text-[#4E4E4E]">
-              No openings are listed right now. Reach out through our contact
-              form to connect with the team.
-            </p>
-          )}
-        </div>
-        <Link className="block xl:hidden w-full" href={"./contact-us"}>
-          <FlipButton className="w-full">
-            <FlipButtonFront className="2xl:text-base shadow-none py-3 px-4 bg-white text-black  w-full h-full  border-2 border-[#EBEBEB]">
-              Contact Us
-            </FlipButtonFront>
-            <FlipButtonBack className="py-3 px-4 bg-[#4D838C] w-full h-full text-white rounded-md">
-              Contact Us
-            </FlipButtonBack>
-          </FlipButton>
-        </Link>
-      </Suspense>
+                <svg
+                  width="8"
+                  height="9"
+                  viewBox="0 0 8 9"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="4" cy="4.5" r="4" fill="#D9D9D9" />
+                </svg>
+                <span className="text-sm 2xl:text-lg font-normal">
+                  {job.employmentType?.replaceAll("_", " ") || "Full time"}
+                </span>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <p className="text-sm text-[#4E4E4E]">
+            No openings are listed right now. Reach out through our contact form
+            to connect with the team.
+          </p>
+        )}
+      </div>
+      <Link className="block xl:hidden w-full" href={"./contact-us"}>
+        <FlipButton className="w-full">
+          <FlipButtonFront className="2xl:text-base shadow-none py-3 px-4 bg-white text-black  w-full h-full  border-2 border-[#EBEBEB]">
+            Contact Us
+          </FlipButtonFront>
+          <FlipButtonBack className="py-3 px-4 bg-[#4D838C] w-full h-full text-white rounded-md">
+            Contact Us
+          </FlipButtonBack>
+        </FlipButton>
+      </Link>
     </>
   );
+}
+
+async function CareersDataContainer() {
+  const careers = await getCareers();
+
+  if (!careers) {
+    return null;
+  }
+
+  return <Careers careers={careers} />;
 }
 
 function Page() {
@@ -327,7 +300,9 @@ function Page() {
             </FlipButton>
           </Link>
         </div>
-        <Careers />
+        <Suspense fallback={<CareerListSkeleton />}>
+          <CareersDataContainer />
+        </Suspense>
       </ContentSection>
       <div className="border-b-2 border-t-2 border-[#646464]  hidden xl:block ">
         <Motion>

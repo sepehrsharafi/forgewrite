@@ -5,6 +5,7 @@ export interface CareerRecord {
   slug: string;
   workLocation: string;
   employmentType: string;
+  link: string;
 }
 
 const SANITY_BASE_URL = process.env.SANITY_BASE_URL;

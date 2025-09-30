@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import "./globals.css";
-import { Inter, PT_Sans } from "next/font/google";
 import NavBar from "./UI/layout/NavBar";
 import SanityBootstrap from "../lib/SanityBootstrap";
 import Scaler from "@/app/UI/components/Scaler";

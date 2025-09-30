@@ -7,6 +7,29 @@ import Image from "next/image";
 import Link from "next/link";
 import { getProjectBySlug } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const slug = params.slug;
+  const project = await getProjectBySlug(slug);
+
+  if (!project) {
+    notFound();
+  }
+
+  const description =
+    (Array.isArray(project.content) && project.content[0]) ||
+    "Explore the details of our project work at ForgeWrite.";
+
+  return {
+    title: `${project.title || "Project"} | ForgeWrite`,
+    description: description,
+  };
+}
 
 async function ProjectDetail({ slug }: { slug: string }) {
   const project = await getProjectBySlug(slug);
