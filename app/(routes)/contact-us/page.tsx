@@ -1,4 +1,3 @@
-"use client";
 import React from "react";
 import ContentHeader from "@/app/UI/layout/ContentHeader";
 import Motion from "@/app/UI/layout/MotionContainer";
@@ -7,6 +6,13 @@ import { FlipButton, FlipButtonFront } from "@/components/buttons/flip";
 import { FlipButtonBack } from "@/components/animate-ui/primitives/buttons/flip";
 import MyLottieComponent from "@/lib/LottieMotion";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Forgewrite | Get in Touch for Projects & Inquiries",
+  description:
+    "Have a question or a project in mind? Contact Forgewrite today. We're here to help with new projects, maintenance, and any inquiries you may have.",
+};
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const invalidClassName =
   "ring-2 ring-[#984134] focus:ring-[#984134] focus:ring-2 focus:ring-offset-0";

@@ -1,39 +1,17 @@
-"use client";
+import type { Metadata } from "next";
 import ContentHeader from "@/app/UI/layout/ContentHeader";
 import ContentSection from "@/app/UI/layout/ContentSection";
 import Motion from "@/app/UI/layout/MotionContainer";
 import MyLottieComponent from "@/lib/LottieMotion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
+import { getAboutPageData, type AboutPageRecord } from "@/lib/sanity/about";
 
-interface AboutData {
-  aboutCompany: string;
-  imageUrl: string;
-  name: string;
-  email: string;
-}
-
-async function fetchAboutData(): Promise<AboutData | null> {
-  try {
-    const response = await fetch("/api/about-us", { cache: "no-store" });
-    if (!response.ok) return null;
-
-    const json = (await response.json()) as {
-      about?: Partial<AboutData> | null;
-    };
-
-    if (!json.about) return null;
-
-    return {
-      aboutCompany: json.about.aboutCompany ?? "",
-      imageUrl: json.about.imageUrl ?? "",
-      name: json.about.name ?? "",
-      email: json.about.email ?? "",
-    };
-  } catch {
-    return null;
-  }
-}
+export const metadata: Metadata = {
+  title: "Forgewrite | Our Story, Mission, and Values",
+  description:
+    "Learn about Forgewrite's story, from our beginnings to our mission for the future. Discover our commitment to innovation, quality, and the people who make it all happen.",
+};
 
 function AboutSkeleton() {
   return (
@@ -61,36 +39,7 @@ function AboutSkeleton() {
   );
 }
 
-function AboutusContent() {
-  const [data, setData] = useState<AboutData | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const result = await fetchAboutData();
-
-        if (!cancelled) {
-          setData(result);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!data) {
-    return <AboutSkeleton />;
-  }
-
-  const about = data;
+function AboutusContent({ about }: { about: AboutPageRecord }) {
   return (
     <>
       <ContentHeader
@@ -129,6 +78,16 @@ function AboutusContent() {
   );
 }
 
+async function AboutDataContainer() {
+  const aboutData = await getAboutPageData();
+
+  if (!aboutData) {
+    return null;
+  }
+
+  return <AboutusContent about={aboutData} />;
+}
+
 function Page() {
   return (
     <>
@@ -140,7 +99,9 @@ function Page() {
             />
           </Motion>
         </div>
-        <AboutusContent />
+        <Suspense fallback={<AboutSkeleton />}>
+          <AboutDataContainer />
+        </Suspense>
       </ContentSection>
       <div className=" border-b-2 border-t-2 border-[#646464] hidden xl:block ">
         <Motion>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import "./globals.css";
-import { Inter, PT_Sans } from "next/font/google";
 import NavBar from "./UI/layout/NavBar";
 import SanityBootstrap from "../lib/SanityBootstrap";
 import Scaler from "@/components/Scaler";
@@ -37,7 +36,7 @@ export default function ClientLayout({
       <Scaler />
 
       <div
-        className={`flex flex-col xl:flex-row-reverse items-center justify-center transition-opacity duration-500 ${
+        className={`flex flex-col xl:flex-row-reverse items-center justify-center transition-opacity duration-500  ${
           appState === "ready" ? "opacity-100" : "opacity-0"
         }`}
         id="scaler-wrapper"

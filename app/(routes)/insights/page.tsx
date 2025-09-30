@@ -6,11 +6,19 @@ import InsightCardSkeleton from "@/app/UI/insights/InsightCardSkeleton";
 import Motion from "@/app/UI/layout/MotionContainer";
 import InsightsMotion from "@/app/UI/insights/InsightsMotion";
 import { type InsightRecord, getInsights } from "@/lib/sanity/insights";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Insights | ForgeWrite",
+  description:
+    "Explore articles, case studies, and news from the ForgeWrite team. Stay informed about the latest trends and innovations in engineering and fabrication.",
+};
 
 // The skeleton for the cards grid
 function InsightsSkeleton() {
   return (
     <>
+      <InsightCardSkeleton />
       <InsightCardSkeleton />
       <InsightCardSkeleton />
       <InsightCardSkeleton />
@@ -56,8 +64,6 @@ async function MotionHeaders({
 }
 
 export default function Page() {
-  // Start fetching the data, which gives us a promise.
-  // We don't await it here, so the component renders instantly.
   const insightsPromise = getInsights();
 
   return (
