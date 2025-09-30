@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { services as sliderData } from "../../../lib/services";
-import { TypingAnimation } from "@/components/magicui/typing-animation";
-import { NumberTicker } from "@/components/magicui/number-ticker";
+import { TypingAnimation } from "@/app/UI/components/magicui/typing-animation";
+import { NumberTicker } from "@/app/UI/components/magicui/number-ticker";
 
 export default function Slider({
   activeSlide,

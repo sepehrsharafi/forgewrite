@@ -4,7 +4,7 @@ import Slider from "./UI/home/Slider";
 import ProcessSteps from "./UI/home/ProcessSteps";
 import FallingBricks from "./UI/home/FallingBricks";
 import MotionSlider from "./UI/home/MotionSlider";
-import ScrollReveal from "../components/ScrollReveal";
+import ScrollReveal from "./UI/components/ScrollReveal";
 import MotionSliderHorizontal from "./UI/home/MotionSliderHorizontal";
 import { services } from "@/lib/services";
 import Motion from "./UI/layout/MotionContainer";

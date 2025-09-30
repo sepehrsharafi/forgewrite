@@ -1,4 +1,5 @@
 import "server-only";
+import type { PortableRichTextBlock } from "@/app/UI/portableText";
 
 export interface InsightRecord {
   title: string;
@@ -8,10 +9,10 @@ export interface InsightRecord {
 }
 
 export interface InsightDetailRecord extends InsightRecord {
-  content: string;
+  content?: PortableRichTextBlock[];
 }
 
-const SANITY_QUERY = `*[_type == "insights"]{
+const SANITY_QUERY = `*[_type == "insights"]| order(_updatedAt desc){
   "title": coalesce(title, ""),
   "slug": coalesce(slug.current, ""),
   "imageUrl": coalesce(image.asset->url, ""),
@@ -21,6 +22,10 @@ const SANITY_QUERY = `*[_type == "insights"]{
 const SANITY_BASE_URL = process.env.SANITY_BASE_URL;
 
 export async function getInsights(): Promise<InsightRecord[]> {
+  if (!SANITY_BASE_URL) {
+    throw new Error("SANITY_BASE_URL is not configured.");
+  }
+
   const searchParams = new URLSearchParams();
   searchParams.set("perspective", "published");
   searchParams.set("query", SANITY_QUERY);
@@ -48,12 +53,43 @@ const SANITY_DETAIL_QUERY = `*[_type == "insights" && slug.current == $slug][0]{
   "slug": coalesce(slug.current, ""),
   "imageUrl": coalesce(image.asset->url, ""),
   "description": coalesce(description, ""),
-  "content": coalesce(pt::text(content), "")
+  "content": select(
+    defined(content) => content[]{
+      ...,
+      markDefs[]{
+        ...,
+        _type == "internalLink" => {
+          ...,
+          "slug": reference->slug
+        }
+      },
+      _type == "image" => {
+        ...,
+        asset->{
+          url,
+          metadata{
+            dimensions{
+              width,
+              height,
+              aspectRatio
+            }
+          }
+        },
+        "alt": coalesce(alt, asset->altText, ""),
+        "caption": coalesce(caption, "")
+      }
+    },
+    []
+  )
 }`;
 
 export async function getInsightBySlug(
   slug: string
 ): Promise<InsightDetailRecord | null> {
+  if (!SANITY_BASE_URL) {
+    throw new Error("SANITY_BASE_URL is not configured.");
+  }
+
   const searchParams = new URLSearchParams();
   searchParams.set("perspective", "published");
   searchParams.set("query", SANITY_DETAIL_QUERY);

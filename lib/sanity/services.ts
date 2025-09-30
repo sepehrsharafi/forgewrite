@@ -1,18 +1,12 @@
 import "server-only";
 
-export type ServiceCategoryId = "engineers" | "fieldSupport" | "officeManagers";
+import type {
+  ServiceCategory,
+  ServiceCategoryId,
+  ServicesData,
+} from "./types";
 
-export interface ServiceCategoryRecord {
-  id: ServiceCategoryId;
-  label: string;
-  items: string[];
-}
-
-export interface ServicesPageRecord {
-  categories: ServiceCategoryRecord[];
-  leaderName: string;
-  leaderImageUrl: string;
-}
+export type { ServiceCategory, ServiceCategoryId, ServicesData } from "./types";
 
 const SANITY_BASE_URL = process.env.SANITY_BASE_URL;
 
@@ -37,7 +31,7 @@ const SERVICES_QUERY = `{
   }
 }`;
 
-export async function getServicesPageData(): Promise<ServicesPageRecord> {
+export async function getServicesPageData(): Promise<ServicesData> {
   const searchParams = new URLSearchParams();
   searchParams.set("perspective", "published");
   searchParams.set("query", SERVICES_QUERY);
@@ -79,9 +73,9 @@ export async function getServicesPageData(): Promise<ServicesPageRecord> {
         id,
         label: entry.label ?? "",
         items,
-      } satisfies ServiceCategoryRecord;
+      } satisfies ServiceCategory;
     })
-    .filter((item): item is ServiceCategoryRecord => Boolean(item));
+    .filter((item): item is ServiceCategory => Boolean(item));
 
   return {
     categories,

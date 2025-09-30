@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import "./globals.css";
 import NavBar from "./UI/layout/NavBar";
 import SanityBootstrap from "../lib/SanityBootstrap";
-import Scaler from "@/components/Scaler";
-import WelcomeModal from "@/components/WelcomeModal";
+import Scaler from "@/app/UI/components/Scaler";
+import WelcomeModal from "@/app/UI/components/WelcomeModal";
 
 export default function ClientLayout({
   children,
@@ -44,9 +44,9 @@ export default function ClientLayout({
         id="scaler-wrapper"
       >
         <NavBar />
-        <main className="flex flex-col-reverse xl:flex-row p-4 pt-0 xl:p-0 w-screen xl:w-fit xl:h-full h-dvh">
+        <section className="flex flex-col-reverse xl:flex-row p-4 pt-0 xl:p-0 w-screen xl:w-fit xl:h-full h-dvh">
           {children}
-        </main>
+        </section>
       </div>
     </>
   );
