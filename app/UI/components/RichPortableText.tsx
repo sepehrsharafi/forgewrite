@@ -5,11 +5,9 @@ import {
 } from "@portabletext/react";
 import type {
   PortableImageBlock,
-  ProjectPortableTextBlock,
-} from "@/lib/sanity/projects";
+  PortableRichTextBlock,
+} from "@/app/UI/portableText";
 import clsx from "clsx";
-
-type RichPortableTextValue = ProjectPortableTextBlock[];
 
 function resolveImageDimensions(image?: PortableImageBlock["asset"]): {
   width: number;
@@ -124,11 +122,11 @@ const portableTextComponents: PortableTextReactComponents = {
       }
 
       const { width, height } = resolveImageDimensions(imageValue.asset);
-      const alt = imageValue.alt?.trim() || "Project illustration";
+      const alt = imageValue.alt?.trim() || "Content illustration";
       const caption = imageValue.caption?.trim();
 
       return (
-        <figure className="my-6 overflow-hidden rounded-sm bg-neutral-50 p-3 xl:mx-5 2xl:mx-20">
+        <figure className="my-6 overflow-hidden rounded-sm bg-neutral-50 p-3 shadow-sm">
           <Image
             src={src}
             alt={alt}
@@ -149,7 +147,7 @@ const portableTextComponents: PortableTextReactComponents = {
 };
 
 export interface RichPortableTextProps {
-  value?: RichPortableTextValue;
+  value?: PortableRichTextBlock[];
   className?: string;
 }
 

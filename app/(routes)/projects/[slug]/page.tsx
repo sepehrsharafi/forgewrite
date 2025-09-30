@@ -5,12 +5,13 @@ import ContentSection from "@/app/UI/layout/ContentSection";
 import Motion from "@/app/UI/layout/MotionContainer";
 import Image from "next/image";
 import Link from "next/link";
-import { getProjectBySlug, type ProjectPortableTextBlock } from "@/lib/sanity/projects";
+import { getProjectBySlug } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
 import { Metadata } from "next";
 import { RichPortableText } from "@/app/UI/components/RichPortableText";
+import type { PortableRichTextBlock } from "@/app/UI/portableText";
 
-function portableTextToPlainText(blocks?: ProjectPortableTextBlock[]): string {
+function portableTextToPlainText(blocks?: PortableRichTextBlock[]): string {
   if (!Array.isArray(blocks)) {
     return "";
   }
@@ -21,7 +22,8 @@ function portableTextToPlainText(blocks?: ProjectPortableTextBlock[]): string {
         return "";
       }
 
-      const children = (block as { children?: Array<{ text?: string }> }).children ?? [];
+      const children =
+        (block as { children?: Array<{ text?: string }> }).children ?? [];
 
       return children
         .map((child) => (typeof child?.text === "string" ? child.text : ""))
@@ -45,7 +47,9 @@ export async function generateMetadata({
   }
 
   const plainText = portableTextToPlainText(project.content);
-  const fallbackDescription = project.description?.trim() || "Explore the details of our project work at ForgeWrite.";
+  const fallbackDescription =
+    project.description?.trim() ||
+    "Explore the details of our project work at ForgeWrite.";
   const descriptionSource = plainText || fallbackDescription;
   const description =
     descriptionSource.length > 160
@@ -117,7 +121,10 @@ async function ProjectDetail({ slug }: { slug: string }) {
           ) : null}
 
           {contentBlocks.length > 0 && (
-            <RichPortableText value={contentBlocks} className="text-[#4E4E4E]" />
+            <RichPortableText
+              value={contentBlocks}
+              className="text-[#4E4E4E]"
+            />
           )}
         </section>
       </ContentSection>
@@ -140,19 +147,9 @@ async function ProjectDetail({ slug }: { slug: string }) {
                   No additional notes.
                 </span>
               )}
-              {/* <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.title}
-            </span>
-            <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.createdAt}
-            </span>
-
-            <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.location}
-            </span> */}
             </div>
             <Image
-              className="m-4 object-contain w-fit"
+              className="p-6 object-contain w-fit mx-auto mb-32"
               src={"/images/3d-illustration-building-project_269358100.jpg"}
               height={400}
               width={300}
