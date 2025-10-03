@@ -16,6 +16,8 @@ export const metadata: Metadata = {
     "Explore a selection of our past projects. See how we've helped clients overcome challenges and achieve their goals through innovative engineering and fabrication solutions.",
 };
 
+export const dynamic = "force-dynamic";
+
 async function ProjectsList() {
   try {
     const projects = await getProjects();
