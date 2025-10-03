@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import Mailjet from "node-mailjet";
 
+// Define proper interface for Mailjet response
+interface MailjetResponse {
+  body: {
+    Messages?: Array<{
+      To?: Array<{
+        MessageUUID?: string;
+      }>;
+    }>;
+  };
+}
+
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const escapeHtml = (value: string) =>
@@ -95,9 +106,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const toAddress = process.env.CONTACT_FORM_TO_EMAIL ?? "sepehr.sharafi.123@gmail.com";
+  const toAddress =
+    process.env.CONTACT_FORM_TO_EMAIL ?? "sepehr.sharafi.123@gmail.com";
   const fromAddressRaw =
-    process.env.CONTACT_FORM_FROM_EMAIL ?? "Forgewrite Contact <no-reply@forgewrite.com>";
+    process.env.CONTACT_FORM_FROM_EMAIL ??
+    "Forgewrite Contact <no-reply@forgewrite.com>";
 
   const sender = extractNameAndEmail(fromAddressRaw);
 
@@ -145,8 +158,15 @@ export async function POST(request: Request) {
   };
 
   try {
-    const response = await mailjet.post("send", { version: "v3.1" }).request(messagePayload);
-    console.log("Mailjet email queued", response.body?.Messages?.[0]?.To?.[0]?.MessageUUID ?? response.body);
+    const response = await mailjet
+      .post("send", { version: "v3.1" })
+      .request(messagePayload);
+
+    // Safely access the response data with proper typing
+    const responseData = response as MailjetResponse;
+    const messageUUID = responseData.body?.Messages?.[0]?.To?.[0]?.MessageUUID;
+
+    console.log("Mailjet email queued", messageUUID ?? response.body);
   } catch (error) {
     console.error("Failed to send contact form email via Mailjet", error);
     return NextResponse.json(
