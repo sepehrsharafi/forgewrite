@@ -7,14 +7,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { getInsightBySlug } from "@/lib/sanity/insights";
 import { InsightDetailSkeleton } from "@/app/UI/insights/InsightSkeleton";
+import { RichPortableText } from "@/app/UI/components/RichPortableText";
 import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const slug = params.slug;
+  const { slug } = await params;
   const insight = await getInsightBySlug(slug);
 
   if (!insight) {
@@ -28,6 +29,7 @@ export async function generateMetadata({
       "Read more about this topic on ForgeWrite's insights page.",
   };
 }
+
 async function InsightDetail({ slug }: { slug: string }) {
   const insight = await getInsightBySlug(slug);
 
@@ -83,9 +85,10 @@ async function InsightDetail({ slug }: { slug: string }) {
             <ContentHeader title={insight.title || "Insight"} />
           </div>
           {insight.content && (
-            <p className="text-[#4E4E4E] 2xl: 2xl:text-xl whitespace-pre-line text-base">
-              {insight.content}
-            </p>
+            <RichPortableText
+              value={insight.content}
+              className="text-[#4E4E4E] 2xl:text-xl"
+            />
           )}
         </section>
       </ContentSection>

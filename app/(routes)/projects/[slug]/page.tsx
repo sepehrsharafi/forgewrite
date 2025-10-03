@@ -7,14 +7,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { getProjectBySlug } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
+import { RichPortableText } from "@/app/UI/components/RichPortableText";
 import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const slug = params.slug;
+  const { slug } = await params;
   const project = await getProjectBySlug(slug);
 
   if (!project) {
@@ -22,7 +23,7 @@ export async function generateMetadata({
   }
 
   const description =
-    (Array.isArray(project.content) && project.content[0]) ||
+    project.description ||
     "Explore the details of our project work at ForgeWrite.";
 
   return {
@@ -39,7 +40,6 @@ async function ProjectDetail({ slug }: { slug: string }) {
   }
 
   const imageSrc = project.imageUrl || "/images/fallback-image.png";
-  const contentBlocks = Array.isArray(project.content) ? project.content : [];
 
   return (
     <>
@@ -89,17 +89,11 @@ async function ProjectDetail({ slug }: { slug: string }) {
             />
           ) : null}
 
-          {contentBlocks.length > 0 && (
-            <div className="flex flex-col gap-4 text-[#4E4E4E]">
-              {contentBlocks.map((paragraph, index) => (
-                <p
-                  key={`project-content-${index}`}
-                  className="whitespace-pre-line 2xl:text-xl"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+          {project.content && (
+            <RichPortableText
+              value={project.content}
+              className="text-[#4E4E4E]"
+            />
           )}
         </section>
       </ContentSection>
@@ -122,16 +116,6 @@ async function ProjectDetail({ slug }: { slug: string }) {
                   No additional notes.
                 </span>
               )}
-              {/* <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.title}
-            </span>
-            <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.createdAt}
-            </span>
-
-            <span className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit">
-              {project.location}
-            </span> */}
             </div>
             <Image
               className="m-4 object-contain w-fit"
