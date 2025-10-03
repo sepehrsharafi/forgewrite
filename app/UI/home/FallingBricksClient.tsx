@@ -1,20 +1,52 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-// Note: The top-level 'import Matter from "matter-js"' is intentionally removed.
 
-// --- TYPE DEFINITIONS ---
-// We use a special TypeScript utility to get the type of the Matter library
-type MatterType = typeof import("matter-js");
+type RapierModule = typeof import("@dimforge/rapier2d-compat");
+type RapierWorld = import("@dimforge/rapier2d-compat").World;
 
-interface Brick {
-  id: string;
-  body: import("matter-js").Body;
-  text: string;
-  color: string;
-  type: "text" | "number";
+type BrickType = "text" | "number";
+
+interface BrickSizes {
+  textWidth: number;
+  textHeight: number;
+  numberSize: number;
 }
 
-// --- CONSTANTS ---
+interface BrickInternal {
+  id: string;
+  pairId: string;
+  handle: number;
+  text: string;
+  color: string;
+  type: BrickType;
+  width: number;
+  height: number;
+}
+
+interface VisualBrick extends Omit<BrickInternal, "handle"> {
+  x: number;
+  y: number;
+  angle: number;
+}
+
+interface DragState {
+  brickId: string | null;
+  pointerId: number | null;
+  offset: {
+    x: number;
+    y: number;
+  };
+  lastPosition: {
+    x: number;
+    y: number;
+  } | null;
+  lastTimestamp: number;
+  velocity: {
+    x: number;
+    y: number;
+  };
+}
+
 const PROMOTIONAL_TEXTS = [
   "Assess & Strategize",
   "Engineer & Design",
@@ -22,44 +54,86 @@ const PROMOTIONAL_TEXTS = [
   "Oversee & Review",
   "Test & Deliver",
 ];
+// Colors used for both the text outline and companion number bricks.
 const COLORS = ["#629199", "#4D4E69"];
+// Delay (ms) between each spawned text/number pair.
+const FALL_INTERVAL_MS = 1500;
+// Increase to make bricks fall faster; lower numbers slow the simulation.
+const GRAVITY = 1200;
 
-// --- HELPER FUNCTIONS ---
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
-// --- COMPONENT ---
 interface Props {
   height?: number | string;
   isReady?: boolean;
 }
 
+const resetDragState = (): DragState => ({
+  brickId: null,
+  pointerId: null,
+  offset: { x: 0, y: 0 },
+  lastPosition: null,
+  lastTimestamp: 0,
+  velocity: { x: 0, y: 0 },
+});
+
 const FallingBricks = ({ height, isReady }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<import("matter-js").Engine | null>(null);
-  const matterRef = useRef<MatterType | null>(null);
-  const mouseConstraintRef = useRef<import("matter-js").MouseConstraint | null>(
-    null
-  );
-  const [bricks, setBricks] = useState<Brick[]>([]);
+  const rapierPromiseRef = useRef<Promise<RapierModule> | null>(null);
+  const rapierRef = useRef<RapierModule | null>(null);
+  const worldRef = useRef<RapierWorld | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const spawnIntervalRef = useRef<number | null>(null);
+  const bricksRef = useRef<BrickInternal[]>([]);
+  const dragStateRef = useRef<DragState>(resetDragState());
+  const [bricks, setBricks] = useState<VisualBrick[]>([]);
   const [isVisible, setIsVisible] = useState(false);
-  const [brickSizes, setBrickSizes] = useState({
+  const [brickSizes, setBrickSizes] = useState<BrickSizes>({
     textWidth: 160,
     textHeight: 70,
     numberSize: 50,
   });
 
+  // Lazy-load and init Rapier only when the animation actually runs.
+  const loadRapier = () => {
+    if (!rapierPromiseRef.current) {
+      rapierPromiseRef.current = import("@dimforge/rapier2d-compat").then(
+        async (module) => {
+          await module.init();
+          return module;
+        }
+      );
+    }
+
+    return rapierPromiseRef.current;
+  };
+
+  // Translate pointer coordinates into the unscaled container space so dragging stays aligned.
+  const computePointerPosition = (clientX: number, clientY: number) => {
+    const container = containerRef.current;
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+
+    const scaleX = container.clientWidth / rect.width;
+    const scaleY = container.clientHeight / rect.height;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1280px)");
     const updateSizes = () => {
       if (mediaQuery.matches) {
-        // Desktop
         setBrickSizes({
           textWidth: 150,
           textHeight: 60,
           numberSize: 40,
         });
       } else {
-        // Mobile
         setBrickSizes({
           textWidth: 120,
           textHeight: 50,
@@ -83,201 +157,417 @@ const FallingBricks = ({ height, isReady }: Props) => {
       },
       { threshold: 0.1 }
     );
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+
+    const node = containerRef.current;
+    if (node) {
+      observer.observe(node);
     }
+
     return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
+      if (node) {
+        observer.unobserve(node);
       }
     };
   }, []);
 
   useEffect(() => {
     if (!isVisible || !isReady) return;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Matter = require("matter-js");
-    matterRef.current = Matter;
-    const container = containerRef.current;
-    if (!container) return;
 
-    // Create engine and world
-    const engine = Matter.Engine.create({
-      enableSleeping: true,
-      positionIterations: 16,
-      velocityIterations: 14,
-    });
-    engineRef.current = engine;
-    const world = engine.world;
-    engine.gravity.y = 1.5;
+    let cancelled = false;
+    let localWorld: RapierWorld | null = null;
 
-    const { clientWidth: width, clientHeight: height } = container;
+    const setupWorld = async () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const { clientWidth: width, clientHeight: heightPx } = container;
+      if (width === 0 || heightPx === 0) return;
 
-    // Create static boundaries
-    const wallOptions = { isStatic: true, restitution: 0.1, friction: 0.75 };
-    const ground = Matter.Bodies.rectangle(
-      width / 2,
-      height + 50,
-      width + 100,
-      100,
-      wallOptions
-    );
-    const leftWall = Matter.Bodies.rectangle(
-      -50,
-      height / 2,
-      100,
-      height * 2,
-      wallOptions
-    );
-    const rightWall = Matter.Bodies.rectangle(
-      width + 50,
-      height / 2,
-      100,
-      height * 2,
-      wallOptions
-    );
-    const ceiling = Matter.Bodies.rectangle(
-      width / 2,
-      -50,
-      width + 100,
-      100,
-      wallOptions
-    );
-    Matter.Composite.add(world, [ground, leftWall, rightWall, ceiling]);
+      const rapier = await loadRapier();
+      if (cancelled) return;
 
-    // Add mouse control
-    const mouse = Matter.Mouse.create(container);
-    const mouseConstraint = Matter.MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: { stiffness: 0.9, render: { visible: false } },
-    });
-    mouseConstraintRef.current = mouseConstraint;
-    Matter.Composite.add(world, mouseConstraint);
+      rapierRef.current = rapier;
+      const world = new rapier.World({ x: 0, y: GRAVITY });
+      worldRef.current = world;
+      localWorld = world;
 
-    // Sequentially add bricks
-    let brickIndex = 0;
-    const intervalId = setInterval(() => {
-      if (brickIndex >= PROMOTIONAL_TEXTS.length) {
-        clearInterval(intervalId);
-        return;
+      bricksRef.current = [];
+      dragStateRef.current = resetDragState();
+      setBricks([]);
+
+      // Helper to wrap the play area with static colliders so bricks stay onscreen.
+      const createBoundary = (x: number, y: number, w: number, h: number) => {
+        const body = world.createRigidBody(
+          rapier.RigidBodyDesc.fixed().setTranslation(x, y)
+        );
+        world.createCollider(
+          rapier.ColliderDesc.cuboid(w / 2, h / 2)
+            .setRestitution(0.4)
+            .setFriction(0.9),
+          body
+        );
+      };
+
+      createBoundary(width / 2, heightPx + 60, width + 120, 120);
+      createBoundary(-60, heightPx / 2, 120, heightPx * 2);
+      createBoundary(width + 60, heightPx / 2, 120, heightPx * 2);
+      createBoundary(width / 2, -60, width + 120, 120);
+
+      // Spawn a promotional text brick and its numbered companion, linked by a spring joint.
+      const spawnPair = (index: number) => {
+        if (index >= PROMOTIONAL_TEXTS.length) return;
+        const text = PROMOTIONAL_TEXTS[index];
+        const number = (index + 1).toString(); // Update this if you want different numbering.
+        const color = getRandomColor(); // Randomize per pair so colors stay varied.
+        const pairId = `pair-${index}`;
+        const x = width / 2 + (Math.random() - 0.5) * 100;
+
+        const textBody = world.createRigidBody(
+          rapier.RigidBodyDesc.dynamic()
+            .setTranslation(x, -brickSizes.textHeight)
+            .setLinearDamping(1.2)
+            .setAngularDamping(0.8)
+        );
+        textBody.enableCcd(true);
+        world.createCollider(
+          rapier.ColliderDesc.cuboid(
+            brickSizes.textWidth / 2,
+            brickSizes.textHeight / 2
+          )
+            .setDensity(0.021)
+            .setRestitution(0.75)
+            .setFriction(0.6),
+          textBody
+        );
+
+        const textId = `text-${textBody.handle}`;
+        bricksRef.current.push({
+          id: textId,
+          pairId,
+          handle: textBody.handle,
+          text,
+          color,
+          type: "text",
+          width: brickSizes.textWidth,
+          height: brickSizes.textHeight,
+        });
+
+        const numberBody = world.createRigidBody(
+          rapier.RigidBodyDesc.dynamic()
+            .setTranslation(
+              x + brickSizes.textWidth / 2 + brickSizes.numberSize / 2 + 10, // Position to the right of the text brick
+              -brickSizes.textHeight // Align vertically with the text brick
+            )
+            .setLinearDamping(1.2)
+            .setAngularDamping(0.8)
+        );
+        numberBody.enableCcd(true);
+        world.createCollider(
+          rapier.ColliderDesc.cuboid(
+            brickSizes.numberSize / 2,
+            brickSizes.numberSize / 2
+          )
+            .setDensity(0.021)
+            .setRestitution(0.75)
+            .setFriction(0.6),
+          numberBody
+        );
+
+        const numberId = `number-${numberBody.handle}`;
+        bricksRef.current.push({
+          id: numberId,
+          pairId,
+          handle: numberBody.handle,
+          text: number,
+          color,
+          type: "number",
+          width: brickSizes.numberSize,
+          height: brickSizes.numberSize,
+        });
+
+        // Distance the joint tries to maintain between the bricks.
+        const restLength =
+          brickSizes.textWidth / 2 + brickSizes.numberSize / 2 + 10; // Adjust restLength for horizontal joint
+        const joint = rapier.JointData.spring(
+          restLength,
+          40,
+          3,
+          { x: brickSizes.textWidth / 2, y: 0 }, // Anchor on the right side of the text brick
+          { x: -brickSizes.numberSize / 2, y: 0 } // Anchor on the left side of the number brick
+        );
+        world.createImpulseJoint(joint, textBody, numberBody, true);
+      };
+
+      if (PROMOTIONAL_TEXTS.length > 0) {
+        spawnPair(0);
+        let nextIndex = 1;
+
+        if (nextIndex < PROMOTIONAL_TEXTS.length) {
+          spawnIntervalRef.current = window.setInterval(() => {
+            spawnPair(nextIndex);
+            nextIndex += 1;
+
+            if (
+              nextIndex >= PROMOTIONAL_TEXTS.length &&
+              spawnIntervalRef.current !== null
+            ) {
+              window.clearInterval(spawnIntervalRef.current);
+              spawnIntervalRef.current = null;
+            }
+          }, FALL_INTERVAL_MS);
+        }
       }
 
-      const text = PROMOTIONAL_TEXTS[brickIndex];
-      const number = (brickIndex + 1).toString();
-      const color = getRandomColor();
-      const x = width / 2 + (Math.random() - 0.5) * 100; // Increase spread range
+      // Advance the Rapier simulation and sync positions back to React state.
+      const step = () => {
+        if (cancelled) return;
+        world.step();
 
-      const textBody = Matter.Bodies.rectangle(
-        x,
-        -30,
-        brickSizes.textWidth,
-        brickSizes.textHeight,
-        {
-          restitution: 0.5, // Add some bounce
-          friction: 0.8,
-          frictionStatic: 0.5,
-          slop: 0.3, // Increase slop for better collision
-          angle: (Math.random() - 0.5) * 0.3,
-          density: 0.021, // Add density to prevent overlapping
+        const nextBricks: VisualBrick[] = [];
+        for (const brick of bricksRef.current) {
+          const body = world.getRigidBody(brick.handle);
+          if (!body) continue;
+          const position = body.translation();
+          const angle = body.rotation();
+
+          nextBricks.push({
+            id: brick.id,
+            pairId: brick.pairId,
+            text: brick.text,
+            color: brick.color,
+            type: brick.type,
+            width: brick.width,
+            height: brick.height,
+            x: position.x,
+            y: position.y,
+            angle,
+          });
         }
-      );
-      const textBrick: Brick = {
-        id: textBody.id.toString(),
-        body: textBody,
-        text,
-        color,
-        type: "text",
+
+        setBricks(nextBricks);
+        animationFrameRef.current = window.requestAnimationFrame(step);
       };
 
-      const numberBody = Matter.Bodies.rectangle(
-        x,
-        -80,
-        brickSizes.numberSize,
-        brickSizes.numberSize,
-        {
-          restitution: 0.5, // Add some bounce
-          friction: 0.8,
-          frictionStatic: 0.5,
-          slop: 0.3, // Increase slop for better collision
-          angle: (Math.random() - 0.5) * 0.3,
-          density: 0.021, // Add density to prevent overlapping
-        }
-      );
-      const numberBrick: Brick = {
-        id: numberBody.id.toString(),
-        body: numberBody,
-        text: number,
-        color,
-        type: "number",
-      };
-
-      const constraint = Matter.Constraint.create({
-        bodyA: textBody,
-        bodyB: numberBody,
-        stiffness: 0.9,
-        length: brickSizes.textHeight / 2 + brickSizes.numberSize / 2 + 10,
-        render: { visible: false },
-      });
-
-      Matter.Composite.add(world, [textBody, numberBody, constraint]);
-      setBricks((prev) => [...prev, textBrick, numberBrick]);
-
-      brickIndex++;
-    }, 1000); // Increase delay between bricks from 1000ms to 1500ms
-
-    // Animation loop
-    const runner = Matter.Runner.create();
-    Matter.Runner.run(runner, engine);
-
-    const update = () => {
-      setBricks((currentBricks) => [...currentBricks]);
-      requestAnimationFrame(update);
+      animationFrameRef.current = window.requestAnimationFrame(step);
     };
-    const animationFrameId = requestAnimationFrame(update);
 
-    // Cleanup
+    setupWorld();
+
     return () => {
-      clearInterval(intervalId);
-      cancelAnimationFrame(animationFrameId);
-      setBricks([]); // <-- Add this line to reset the game state
-      if (matterRef.current && engineRef.current) {
-        const M = matterRef.current;
-        const E = engineRef.current;
-        M.Runner.stop(runner);
-        M.World.clear(E.world, false);
-        M.Engine.clear(E);
+      cancelled = true;
+      if (spawnIntervalRef.current !== null) {
+        window.clearInterval(spawnIntervalRef.current);
+        spawnIntervalRef.current = null;
+      }
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      bricksRef.current = [];
+      dragStateRef.current = resetDragState();
+      setBricks([]);
+
+      if (localWorld) {
+        localWorld.free();
+      }
+      if (worldRef.current === localWorld) {
+        worldRef.current = null;
       }
     };
   }, [isVisible, brickSizes, isReady]);
 
-  useEffect(() => {
-    if (!isVisible || !matterRef.current || !mouseConstraintRef.current) return;
+  // Begin dragging: capture pointer offset and initialize velocity tracking.
+  const handlePointerDown = (
+    brickId: string,
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    const world = worldRef.current;
+    if (!world) return;
 
-    const scalerWrapper = document.getElementById("scaler-wrapper");
-    if (!scalerWrapper) return;
+    const pointer = computePointerPosition(event.clientX, event.clientY);
+    if (!pointer) return;
 
-    const M = matterRef.current;
-    const mc = mouseConstraintRef.current;
+    const brick = bricksRef.current.find((item) => item.id === brickId);
+    if (!brick) return;
 
-    const updateScale = () => {
-      const transform = window.getComputedStyle(scalerWrapper).transform;
-      let scale = 1;
-      if (transform && transform !== "none") {
-        const matrix = new DOMMatrix(transform);
-        scale = matrix.a;
+    const body = world.getRigidBody(brick.handle);
+    if (!body) return;
+
+    const translation = body.translation();
+    const offset = {
+      x: pointer.x - translation.x,
+      y: pointer.y - translation.y,
+    };
+
+    dragStateRef.current = {
+      brickId,
+      pointerId: event.pointerId,
+      offset,
+      lastPosition: { x: translation.x, y: translation.y },
+      lastTimestamp: event.timeStamp,
+      velocity: { x: 0, y: 0 },
+    };
+
+    body.setLinvel({ x: 0, y: 0 }, true);
+    body.setAngvel(0, true);
+    body.wakeUp();
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  };
+
+  // Update the brick while dragging and keep the throw velocity in sync with pointer motion.
+  const handlePointerMove = (
+    brickId: string,
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    const dragState = dragStateRef.current;
+    if (
+      dragState.brickId !== brickId ||
+      dragState.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    const world = worldRef.current;
+    if (!world) return;
+
+    const pointer = computePointerPosition(event.clientX, event.clientY);
+    if (!pointer) return;
+
+    const brick = bricksRef.current.find((item) => item.id === brickId);
+    if (!brick) return;
+
+    const body = world.getRigidBody(brick.handle);
+    if (!body) return;
+
+    const target = {
+      x: pointer.x - dragState.offset.x,
+      y: pointer.y - dragState.offset.y,
+    };
+
+    const now = event.timeStamp;
+    let velocity = dragState.velocity;
+    if (dragState.lastPosition) {
+      const dt = (now - dragState.lastTimestamp) / 1000;
+      if (dt > 0) {
+        velocity = {
+          x: (target.x - dragState.lastPosition.x) / dt,
+          y: (target.y - dragState.lastPosition.y) / dt,
+        };
       }
-      M.Mouse.setScale(mc.mouse, { x: 1 / scale, y: 1 / scale });
+    } else {
+      velocity = { x: 0, y: 0 };
+    }
+
+    const updatedState: DragState = {
+      ...dragState,
+      lastPosition: { x: target.x, y: target.y },
+      lastTimestamp: now,
+      velocity,
+    };
+    dragStateRef.current = updatedState;
+
+    body.setTranslation(target, true);
+    body.setLinvel({ x: 0, y: 0 }, true);
+    body.setAngvel(0, true);
+    event.preventDefault();
+  };
+
+  // Release the brick when the pointer lifts or cancels.
+  const finishDrag = (
+    brickId: string,
+    pointerId: number,
+    target: HTMLDivElement
+  ) => {
+    const dragState = dragStateRef.current;
+    if (dragState.brickId !== brickId || dragState.pointerId !== pointerId) {
+      return;
+    }
+
+    const velocity = dragState.velocity;
+    dragStateRef.current = resetDragState();
+
+    if (target.hasPointerCapture(pointerId)) {
+      target.releasePointerCapture(pointerId);
+    }
+
+    const world = worldRef.current;
+    if (!world) return;
+
+    const brick = bricksRef.current.find((item) => item.id === brickId);
+    if (!brick) return;
+
+    const body = world.getRigidBody(brick.handle);
+    if (!body) return;
+
+    body.setLinvel(velocity, true);
+    body.wakeUp();
+  };
+
+  const handlePointerUp = (
+    brickId: string,
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    finishDrag(brickId, event.pointerId, event.currentTarget);
+    event.preventDefault();
+  };
+
+  const handlePointerCancel = (
+    brickId: string,
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    finishDrag(brickId, event.pointerId, event.currentTarget);
+    event.preventDefault();
+  };
+
+  const renderBrick = (brick: VisualBrick) => {
+    const isText = brick.type === "text";
+    const style: React.CSSProperties = {
+      width: `${brick.width}px`,
+      height: `${brick.height}px`,
+      transform: `translate(${brick.x - brick.width / 2}px, ${
+        brick.y - brick.height / 2
+      }px) rotate(${brick.angle}rad)`,
     };
 
-    const resizeObserver = new ResizeObserver(updateScale);
-    resizeObserver.observe(scalerWrapper);
+    if (isText) {
+      style.backgroundColor = "white";
+      style.borderColor = brick.color;
+      style.color = brick.color;
+    } else {
+      style.backgroundColor = brick.color;
+    }
 
-    updateScale();
+    return (
+      <div
+        key={brick.id}
+        className={`absolute top-0 left-0 flex px-2 items-center w-full justify-center text-center rounded-md shadow-lg font-sans text-sm select-none ${
+          isText ? "border" : "text-white"
+        }`}
+        style={style}
+        onPointerDown={(event) => handlePointerDown(brick.id, event)}
+        onPointerMove={(event) => handlePointerMove(brick.id, event)}
+        onPointerUp={(event) => handlePointerUp(brick.id, event)}
+        onPointerCancel={(event) => handlePointerCancel(brick.id, event)}
+      >
+        {brick.text}
+      </div>
+    );
+  };
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [isVisible]);
+  const brickPairs = new Map<
+    string,
+    { text?: VisualBrick; number?: VisualBrick }
+  >();
+  for (const brick of bricks) {
+    const entry = brickPairs.get(brick.pairId) ?? {};
+    if (brick.type === "text") {
+      entry.text = brick;
+    } else {
+      entry.number = brick;
+    }
+    brickPairs.set(brick.pairId, entry);
+  }
 
   const containerStyle: React.CSSProperties = {
     height:
@@ -294,41 +584,12 @@ const FallingBricks = ({ height, isReady }: Props) => {
       className="relative w-full bg-white overflow-hidden"
       style={containerStyle}
     >
-      {bricks.map(({ id, body, color, text, type }) => {
-        const { x, y } = body.position;
-        const angle = body.angle;
-        const isText = type === "text";
-        const width = isText ? brickSizes.textWidth : brickSizes.numberSize;
-        const height = isText ? brickSizes.textHeight : brickSizes.numberSize;
-
-        const style: React.CSSProperties = {
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: `translate(${x - width / 2}px, ${
-            y - height / 2
-          }px) rotate(${angle}rad)`,
-        };
-
-        if (isText) {
-          style.backgroundColor = "white";
-          style.borderColor = color;
-          style.color = color;
-        } else {
-          style.backgroundColor = color;
-        }
-
-        return (
-          <div
-            key={id}
-            className={`absolute top-0 left-0 flex px-2 items-center w-full justify-center text-center rounded-md shadow-lg font-sans text-sm select-none ${
-              isText ? "border" : "text-white"
-            }`}
-            style={style}
-          >
-            {text}
-          </div>
-        );
-      })}
+      {Array.from(brickPairs.entries()).map(([pairId, pair]) => (
+        <React.Fragment key={pairId}>
+          {pair.text && renderBrick(pair.text)}
+          {pair.number && renderBrick(pair.number)}
+        </React.Fragment>
+      ))}
     </div>
   );
 };
