@@ -57,9 +57,9 @@ const PROMOTIONAL_TEXTS = [
 // Colors used for both the text outline and companion number bricks.
 const COLORS = ["#629199", "#4D4E69"];
 // Delay (ms) between each spawned text/number pair.
-const FALL_INTERVAL_MS = 750;
+const FALL_INTERVAL_MS = 1500;
 // Increase to make bricks fall faster; lower numbers slow the simulation.
-const GRAVITY = 1400;
+const GRAVITY = 1200;
 
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
@@ -254,8 +254,8 @@ const FallingBricks = ({ height, isReady }: Props) => {
         const numberBody = world.createRigidBody(
           rapier.RigidBodyDesc.dynamic()
             .setTranslation(
-              x,
-              -brickSizes.textHeight - brickSizes.numberSize - 20
+              x + brickSizes.textWidth / 2 + brickSizes.numberSize / 2 + 10, // Position to the right of the text brick
+              -brickSizes.textHeight // Align vertically with the text brick
             )
             .setLinearDamping(1.2)
             .setAngularDamping(0.8)
@@ -286,13 +286,13 @@ const FallingBricks = ({ height, isReady }: Props) => {
 
         // Distance the joint tries to maintain between the bricks.
         const restLength =
-          brickSizes.textHeight / 2 + brickSizes.numberSize / 2 + 10;
+          brickSizes.textWidth / 2 + brickSizes.numberSize / 2 + 10; // Adjust restLength for horizontal joint
         const joint = rapier.JointData.spring(
           restLength,
           40,
           3,
-          { x: 0, y: brickSizes.textHeight / 2 },
-          { x: 0, y: -brickSizes.numberSize / 2 }
+          { x: brickSizes.textWidth / 2, y: 0 }, // Anchor on the right side of the text brick
+          { x: -brickSizes.numberSize / 2, y: 0 } // Anchor on the left side of the number brick
         );
         world.createImpulseJoint(joint, textBody, numberBody, true);
       };
@@ -555,7 +555,10 @@ const FallingBricks = ({ height, isReady }: Props) => {
     );
   };
 
-  const brickPairs = new Map<string, { text?: VisualBrick; number?: VisualBrick }>();
+  const brickPairs = new Map<
+    string,
+    { text?: VisualBrick; number?: VisualBrick }
+  >();
   for (const brick of bricks) {
     const entry = brickPairs.get(brick.pairId) ?? {};
     if (brick.type === "text") {
@@ -592,6 +595,3 @@ const FallingBricks = ({ height, isReady }: Props) => {
 };
 
 export default FallingBricks;
-
-
-
