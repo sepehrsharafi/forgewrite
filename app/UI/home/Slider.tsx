@@ -18,6 +18,12 @@ export default function Slider({
     previousSlideRef.current = activeSlide;
   }, [activeSlide]);
 
+  useEffect(() => {
+    setIsAnimating(true);
+    const timer = setTimeout(() => setIsAnimating(false), 300);
+    return () => clearTimeout(timer);
+  }, [activeSlide]);
+
   const currentService = sliderData[activeSlide];
   const previousService =
     sliderData[previousSlideRef.current] ?? currentService;
@@ -41,9 +47,6 @@ export default function Slider({
     setIsAnimating(true);
     setTimeout(() => {
       setActiveSlideAction(index);
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
     }, 300);
   };
 
@@ -57,7 +60,7 @@ export default function Slider({
         <span className={`leading-[90px] xl:leading-[140px] h-20 xl:h-33 mb-4`}>
           <NumberTicker
             key={`service-id-${activeSlide}`}
-            value={currentService.id}
+            value={parseId(currentService.id)}
             startValue={previousNumericId}
             duration={600}
             format={formatId}
