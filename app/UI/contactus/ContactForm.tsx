@@ -49,7 +49,7 @@ export default function ContactForm() {
   };
 
   const handleSubmit = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       if (isSubmitting || isLocked) {
@@ -61,7 +61,8 @@ export default function ContactForm() {
 
       const fullNameValue = fullNameRef.current?.value.trim() ?? "";
       const emailValue = emailRef.current?.value.trim() ?? "";
-      const messageValue = messageRef.current?.value.trim() ?? "";
+      const messageRaw = messageRef.current?.value ?? "";
+      const messageValue = messageRaw.trim();
 
       let hasError = false;
       let nextError: string | null = null;
@@ -96,14 +97,39 @@ export default function ContactForm() {
       clearInvalid(emailRef.current);
       clearInvalid(messageRef.current);
 
-      console.log("Contact form submission", {
-        fullName: fullNameValue,
-        email: emailValue,
-        message: messageValue,
-      });
+      try {
+        const response = await fetch("/api/contact", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fullName: fullNameValue,
+            email: emailValue,
+            message: messageRaw,
+          }),
+        });
 
-      setStatus("success");
-      setError(null);
+        if (!response.ok) {
+          const data = (await response.json().catch(() => null)) as
+            | { message?: string }
+            | null;
+          throw new Error(
+            data?.message ?? "We could not send your message. Please try again."
+          );
+        }
+
+        setStatus("success");
+        setError(null);
+      } catch (submissionError) {
+        console.error("Contact form submission failed", submissionError);
+        setError(
+          submissionError instanceof Error
+            ? submissionError.message
+            : "We could not send your message. Please try again."
+        );
+        setStatus("idle");
+      }
     },
     [isLocked, isSubmitting]
   );

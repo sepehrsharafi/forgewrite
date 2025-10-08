@@ -7,32 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { getProjectBySlug } from "@/lib/sanity/projects";
 import { ProjectDetailSkeleton } from "@/app/UI/projects/ProjectDetailSkeleton";
-import { Metadata } from "next";
 import { RichPortableText } from "@/app/UI/components/RichPortableText";
-import type { PortableRichTextBlock } from "@/app/UI/portableText";
-
-function portableTextToPlainText(blocks?: PortableRichTextBlock[]): string {
-  if (!Array.isArray(blocks)) {
-    return "";
-  }
-
-  return blocks
-    .map((block) => {
-      if (!block || block._type !== "block") {
-        return "";
-      }
-
-      const children =
-        (block as { children?: Array<{ text?: string }> }).children ?? [];
-
-      return children
-        .map((child) => (typeof child?.text === "string" ? child.text : ""))
-        .join("");
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
@@ -46,19 +22,13 @@ export async function generateMetadata({
     notFound();
   }
 
-  const plainText = portableTextToPlainText(project.content);
-  const fallbackDescription =
-    project.description?.trim() ||
-    "Explore the details of our project work at ForgeWrite.";
-  const descriptionSource = plainText || fallbackDescription;
   const description =
-    descriptionSource.length > 160
-      ? `${descriptionSource.slice(0, 157).trimEnd()}...`
-      : descriptionSource;
+    project.description ||
+    "Explore the details of our project work at ForgeWrite.";
 
   return {
     title: `${project.title || "Project"} | ForgeWrite`,
-    description,
+    description: description,
   };
 }
 
@@ -70,7 +40,6 @@ async function ProjectDetail({ slug }: { slug: string }) {
   }
 
   const imageSrc = project.imageUrl || "/images/fallback-image.png";
-  const contentBlocks = Array.isArray(project.content) ? project.content : [];
 
   return (
     <>
@@ -120,9 +89,9 @@ async function ProjectDetail({ slug }: { slug: string }) {
             />
           ) : null}
 
-          {contentBlocks.length > 0 && (
+          {project.content && (
             <RichPortableText
-              value={contentBlocks}
+              value={project.content}
               className="text-[#4E4E4E]"
             />
           )}
@@ -149,7 +118,7 @@ async function ProjectDetail({ slug }: { slug: string }) {
               )}
             </div>
             <Image
-              className="p-6 object-contain w-fit mx-auto mb-32"
+              className="m-4 object-contain w-fit"
               src={"/images/3d-illustration-building-project_269358100.jpg"}
               height={400}
               width={300}

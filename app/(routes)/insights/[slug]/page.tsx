@@ -7,32 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { getInsightBySlug } from "@/lib/sanity/insights";
 import { InsightDetailSkeleton } from "@/app/UI/insights/InsightSkeleton";
-import { Metadata } from "next";
 import { RichPortableText } from "@/app/UI/components/RichPortableText";
-import type { PortableRichTextBlock } from "@/app/UI/portableText";
-
-function portableTextToPlainText(blocks?: PortableRichTextBlock[]): string {
-  if (!Array.isArray(blocks)) {
-    return "";
-  }
-
-  return blocks
-    .map((block) => {
-      if (!block || block._type !== "block") {
-        return "";
-      }
-
-      const children =
-        (block as { children?: Array<{ text?: string }> }).children ?? [];
-
-      return children
-        .map((child) => (typeof child?.text === "string" ? child.text : ""))
-        .join("");
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
@@ -46,19 +22,11 @@ export async function generateMetadata({
     notFound();
   }
 
-  const plainText = portableTextToPlainText(insight.content);
-  const fallbackDescription =
-    insight.description?.trim() ||
-    "Read more about this topic on ForgeWrite's insights page.";
-  const descriptionSource = plainText || fallbackDescription;
-  const description =
-    descriptionSource.length > 160
-      ? `${descriptionSource.slice(0, 157).trimEnd()}...`
-      : descriptionSource;
-
   return {
     title: `${insight.title || "Insight"} | ForgeWrite`,
-    description,
+    description:
+      insight.description ||
+      "Read more about this topic on ForgeWrite's insights page.",
   };
 }
 
@@ -69,20 +37,17 @@ async function InsightDetail({ slug }: { slug: string }) {
     notFound();
   }
 
-  const contentBlocks = Array.isArray(insight.content) ? insight.content : [];
-  const heroSrc = insight.imageUrl || "/images/fallback-image.png";
-
   return (
     <>
       <ContentSection>
         <div className="-m-6 block xl:hidden">
           <Motion>
             <Image
-              src={heroSrc}
+              src={insight.imageUrl || "/images/fallback-image.png"}
               width={1600}
               height={900}
               alt={insight.title || "Insight image"}
-              className="h-full w-full object-cover saturate-10"
+              className="w-full h-full object-cover saturate-10"
             />
           </Motion>
         </div>
@@ -94,7 +59,7 @@ async function InsightDetail({ slug }: { slug: string }) {
               aria-label="Back to insights"
             >
               <svg
-                className="h-8 w-8 2xl:h-12 2xl:w-12"
+                className="w-8 h-8 2xl:w-12 2xl:h-12"
                 viewBox="0 0 32 32"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -119,27 +84,23 @@ async function InsightDetail({ slug }: { slug: string }) {
             </Link>
             <ContentHeader title={insight.title || "Insight"} />
           </div>
-          {contentBlocks.length > 0 ? (
+          {insight.content && (
             <RichPortableText
-              value={contentBlocks}
-              className="text-[#4E4E4E]"
+              value={insight.content}
+              className="text-[#4E4E4E] 2xl:text-xl"
             />
-          ) : (
-            <p className="whitespace-pre-line text-base text-[#4E4E4E] 2xl:text-xl">
-              {insight.description || "Details coming soon."}
-            </p>
           )}
         </section>
       </ContentSection>
 
-      <div className="hidden border-y-2 border-[#646464] xl:block">
+      <div className="border-t-2 border-b-2 border-[#646464] hidden xl:block">
         <Motion>
           <Image
-            src={heroSrc}
+            src={insight.imageUrl || "/images/fallback-image.png"}
             width={1600}
             height={900}
             alt={insight.title || "Insight image"}
-            className="h-full w-full object-cover saturate-10"
+            className="w-full h-full object-cover saturate-10"
           />
         </Motion>
       </div>
