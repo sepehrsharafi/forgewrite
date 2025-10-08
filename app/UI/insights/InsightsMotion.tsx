@@ -137,6 +137,7 @@ export default function InsightsMotion({ headers }: { headers?: string[] }) {
             }}
             loop={false}
             words={[word]}
+            speed={0.5}
           />
         </div>
         <InsightButton
