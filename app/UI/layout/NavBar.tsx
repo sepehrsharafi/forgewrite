@@ -42,6 +42,7 @@ function NavBar() {
         className={`xl:hidden ${
           isOpen ? "h-dvh w-fit p-4" : "w-full p-4 pb-0"
         } fixed bg-white top-0 right-0 flex flex-col items-center z-[999]`}
+        aria-label="Navigation Menu"
       >
         <div className="flex flex-row justify-between border-2 border-b-2 border-[#646464] items-center w-full p-5">
           <Link href={"/"} onClick={() => setIsOpen(false)}>
