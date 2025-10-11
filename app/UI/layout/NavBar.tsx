@@ -1,5 +1,4 @@
 "use client";
-
 import { LetterSwapForward } from "@/app/UI/components/LetterSwap";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,7 +6,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import TacModal from "./TacModal";
+import TacModal from "./TACModal";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);

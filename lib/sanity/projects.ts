@@ -13,6 +13,7 @@ export interface ProjectDetailRecord extends ProjectRecord {
   establishedAt?: string;
   breadCrumb?: string[];
   content?: PortableRichTextBlock[];
+  finishedAt?: string;
 }
 
 const SANITY_QUERY = `*[_type == "projects"] | order(_updatedAt desc){
@@ -60,6 +61,7 @@ const SANITY_PROJECT_DETAIL_QUERY = `*[_type == "projects" && slug.current == $s
   "location": coalesce(location, ""),
   "establishedAt": coalesce(establishedAt, ""),
   "breadCrumb": coalesce(breadCrumb, []),
+  "finishedAt": coalesce(finishedAt, ""),
   "content": select(
     defined(content) => content[]{
       ...,

@@ -40,6 +40,11 @@ async function ProjectDetail({ slug }: { slug: string }) {
   }
 
   const imageSrc = project.imageUrl || "/images/fallback-image.png";
+  const extraDetail = [
+    project.title,
+    project.location,
+    project.finishedAt,
+  ].filter(Boolean);
 
   return (
     <>
@@ -102,10 +107,10 @@ async function ProjectDetail({ slug }: { slug: string }) {
         <Motion>
           <div className="flex flex-col justify-between h-full w-full ">
             <div className="mt-16 ml-10 flex flex-col gap-4">
-              {project.breadCrumb?.length ? (
-                project.breadCrumb.map((item, index) => (
+              {extraDetail.length > 0 ? (
+                extraDetail.map((item, index) => (
                   <span
-                    key={`crumb-${index}`}
+                    key={`extra-detail-${index}`}
                     className="hover:bg-neutral-100 transition-all duration-200 p-3 border border-[#4D4E69] rounded-sm text-[#4D4E69] w-fit"
                   >
                     {item}

@@ -55,11 +55,20 @@ export default function Page() {
         </div>
         <ContactForm />
       </ContentSection>
-      <div className=" border-b-2 border-t-2 border-[#646464] hidden xl:block">
+      <div className=" border-b-2 border-t-2 border-[#646464] hidden xl:block 2xl:hidden">
         <Motion>
           <MyLottieComponent
             motionLocation={
               "/motion/Medium Desktop - responsive/D1-Contact Us.json"
+            }
+          />
+        </Motion>
+      </div>
+      <div className=" border-b-2 border-t-2 border-[#646464] hidden 2xl:block">
+        <Motion>
+          <MyLottieComponent
+            motionLocation={
+              "/motion/Medium Desktop - responsive/D1-Contact-Big Desktop.json"
             }
           />
         </Motion>
