@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import TacModal from "./TacModal";
+import TacModal from "./TACModal";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,7 +40,7 @@ function NavBar() {
       <nav
         className={`xl:hidden ${
           isOpen ? "h-dvh w-fit p-4" : "w-full p-4 pb-0"
-        } fixed bg-white top-0 right-0 flex flex-col items-center z-[999]`}
+        } fixed bg-white top-0 right-0 w-full flex flex-col items-center z-[999]`}
       >
         <div className="flex flex-row justify-between border-2 border-b-2 border-[#646464] items-center w-full p-5">
           <Link href={"/"} onClick={() => setIsOpen(false)}>
